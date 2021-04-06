@@ -14,6 +14,9 @@ setup(
         "click",
         "pygments",
     ],
+    entry_points={
+        'console_scripts': ['nbterm = nbterm.nbterm:cli'],
+    },
     classifiers=(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
