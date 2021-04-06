@@ -15,7 +15,7 @@ setup(
         "pygments",
     ],
     entry_points={
-        'console_scripts': ['nbterm = nbterm.nbterm:cli'],
+        "console_scripts": ["nbterm = nbterm.nbterm:cli"],
     },
     classifiers=(
         "Programming Language :: Python :: 3",

@@ -1,0 +1,10 @@
+name: nbterm-dev
+channels:
+    - conda-forge
+dependencies:
+    - pip
+    - prompt_toolkit >=3
+    - click
+    - pygments
+    - flake8
+    - black
