@@ -4,9 +4,10 @@ from .notebook import Notebook
 
 
 @click.command()
-@click.argument("nb-path", default="")
-def cli(nb_path):
-    Notebook(nb_path)
+@click.argument("notebook_path", default="")
+@click.argument("kernel_spec_path", default="")
+def cli(notebook_path, kernel_spec_path):
+    Notebook(notebook_path, kernel_spec_path)
 
 
 if __name__ == "__main__":

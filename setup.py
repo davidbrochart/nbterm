@@ -13,6 +13,7 @@ setup(
         "prompt-toolkit>=3",
         "click",
         "pygments",
+        "kernel_driver",
     ],
     entry_points={
         "console_scripts": ["nbterm = nbterm.nbterm:cli"],

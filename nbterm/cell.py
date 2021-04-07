@@ -76,3 +76,6 @@ class Cell:
         src_list[-1] = src_list[-1][:-1]
         self.cell_json["source"] = src_list
         # TODO: update output
+
+    async def run(self, kd):
+        await kd.execute(self.buffer.text)

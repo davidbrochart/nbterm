@@ -1,24 +1,28 @@
 import os
-import json
 import itertools
 import asyncio
 
+from prompt_toolkit import ANSI
 from prompt_toolkit.layout import ScrollablePane
 from prompt_toolkit.layout.containers import HSplit
 from prompt_toolkit.layout.layout import Layout
+from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit import Application
+from kernel_driver import KernelDriver
+import kernel_driver
 
 from .cell import Cell
+from .format import read_nb, create_nb
 from .key_bindings import default_kb
 
 
 class Notebook:
-    def __init__(self, path):
-        self.path = path
-        if os.path.exists(path):
-            self.read_nb()
+    def __init__(self, nb_path, kspec_path):
+        self.nb_path = nb_path
+        if os.path.exists(nb_path):
+            read_nb(self)
         else:
-            self.cells = [Cell()]
+            create_nb(self)
         self.create_layout()
         self._current_cell = self.cells[0]
         self._cell_entered = False
@@ -26,19 +30,18 @@ class Notebook:
         self.app = Application(
             layout=self.layout, key_bindings=self.key_bindings, full_screen=True
         )
-        self.run()
-
-    def read_nb(self):
-        with open(self.path) as f:
-            self.nb_json = json.load(f)
-        self.cells = [
-            Cell(idx=idx, cell_json=self.nb_json["cells"][idx])
-            for idx, cell in enumerate(self.nb_json["cells"])
-        ]
-
-    def save_nb(self):
-        with open(self.path, "wt") as f:
-            json.dump(self.nb_json, f)
+        if not kspec_path:
+            if os.environ.get("CONDA_PREFIX"):
+                kspec_path = (
+                    os.environ["CONDA_PREFIX"]
+                    + "/share/jupyter/kernels/python3/kernel.json"
+                )
+        if kspec_path:
+            self.kd = KernelDriver(kspec_path, log=False)
+            kernel_driver.driver._output_hook_default = self._output_hook
+        else:
+            self.kd = None
+        asyncio.run(self.main())
 
     def create_layout(self):
         inout_cells = list(
@@ -50,8 +53,9 @@ class Notebook:
         self.layout = Layout(root_container)
 
     def focus(self, idx):
-        self.app.layout.focus(self.cells[idx].input_window)
-        self._current_cell = self.cells[idx]
+        if 0 <= idx < len(self.cells):
+            self.app.layout.focus(self.cells[idx].input_window)
+            self._current_cell = self.cells[idx]
 
     def exit_cell(self):
         self._cell_entered = False
@@ -82,5 +86,26 @@ class Notebook:
     def bind_keys(self):
         self.key_bindings = default_kb(self)
 
-    def run(self):
-        asyncio.run(self.app.run_async())
+    def _output_hook(self, msg):
+        msg_type = msg["header"]["msg_type"]
+        content = msg["content"]
+        if msg_type == "stream":
+            text = content["text"]
+            height = text.count("\n") + 1
+        elif msg_type in ("display_data", "execute_result"):
+            text = content["data"].get("text/plain", "")
+            height = text.count("\n") + 1
+        elif msg_type == "error":
+            text = "\n".join(content["traceback"])
+            height = text.count("\n") + 1
+            text = ANSI(text)
+        else:
+            return
+        self.current_cell.output.content = FormattedTextControl(text=text)
+        self.current_cell.output.height = height
+        self.app.invalidate()
+
+    async def main(self):
+        if self.kd:
+            asyncio.create_task(self.kd.start())
+        await self.app.run_async()

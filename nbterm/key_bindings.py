@@ -1,5 +1,9 @@
+import asyncio
+
 from prompt_toolkit.filters import Condition
 from prompt_toolkit.key_binding import KeyBindings
+
+from .format import save_nb
 
 
 def default_kb(nb):
@@ -15,11 +19,12 @@ def default_kb(nb):
 
     @kb.add("c-q", filter=not_in_cell)
     def _(event):
+        asyncio.create_task(nb.kd.stop())
         nb.app.exit()
 
     @kb.add("c-s", filter=not_in_cell)
     def _(event):
-        nb.save_nb()
+        save_nb(nb)
 
     @kb.add("escape", filter=in_cell)
     def _(event):
@@ -29,14 +34,12 @@ def default_kb(nb):
     @kb.add("up", filter=not_in_cell)
     def _(event):
         cell_idx = nb.current_cell.idx
-        if cell_idx > 0:
-            nb.focus(cell_idx - 1)
+        nb.focus(cell_idx - 1)
 
     @kb.add("down", filter=not_in_cell)
     def _(event):
         cell_idx = nb.current_cell.idx
-        if cell_idx < len(nb.cells) - 1:
-            nb.focus(cell_idx + 1)
+        nb.focus(cell_idx + 1)
 
     @kb.add("enter", filter=not_in_cell)
     def _(event):
@@ -47,15 +50,14 @@ def default_kb(nb):
         nb.current_cell.clear_output()
 
     @kb.add("c-e", filter=not_in_cell)
-    def _(event):
-        nb.current_cell.run()
+    async def _(event):
+        await nb.current_cell.run(nb.kd)
 
     @kb.add("c-r", filter=not_in_cell)
-    def _(event):
-        nb.current_cell.run()
+    async def _(event):
+        await nb.current_cell.run(nb.kd)
         cell_idx = nb.current_cell.idx
-        if cell_idx < len(nb.cells) - 1:
-            nb.focus(cell_idx + 1)
+        nb.focus(cell_idx + 1)
 
     @kb.add("c-i", filter=not_in_cell)
     def _(event):
