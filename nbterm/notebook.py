@@ -25,6 +25,7 @@ class Notebook:
             create_nb(self)
         self.create_layout()
         self._current_cell = self.cells[0]
+        self.executing_cell = self.cells[0]
         self._cell_entered = False
         self.bind_keys()
         self.app = Application(
@@ -90,7 +91,8 @@ class Notebook:
         msg_type = msg["header"]["msg_type"]
         content = msg["content"]
         if msg_type == "stream":
-            text = content["text"]
+            text = self.executing_cell.output.content.text
+            text += content["text"]
             height = text.count("\n") + 1
         elif msg_type in ("display_data", "execute_result"):
             text = content["data"].get("text/plain", "")
@@ -101,8 +103,8 @@ class Notebook:
             text = ANSI(text)
         else:
             return
-        self.current_cell.output.content = FormattedTextControl(text=text)
-        self.current_cell.output.height = height
+        self.executing_cell.output.content = FormattedTextControl(text=text)
+        self.executing_cell.output.height = height
         self.app.invalidate()
 
     async def main(self):

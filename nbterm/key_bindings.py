@@ -33,13 +33,11 @@ def default_kb(nb):
 
     @kb.add("up", filter=not_in_cell)
     def _(event):
-        cell_idx = nb.current_cell.idx
-        nb.focus(cell_idx - 1)
+        nb.focus(nb.current_cell.idx - 1)
 
     @kb.add("down", filter=not_in_cell)
     def _(event):
-        cell_idx = nb.current_cell.idx
-        nb.focus(cell_idx + 1)
+        nb.focus(nb.current_cell.idx + 1)
 
     @kb.add("enter", filter=not_in_cell)
     def _(event):
@@ -51,22 +49,23 @@ def default_kb(nb):
 
     @kb.add("c-e", filter=not_in_cell)
     async def _(event):
+        nb.executing_cell = nb.current_cell
+        nb.current_cell.clear_output()
         await nb.current_cell.run(nb.kd)
 
     @kb.add("c-r", filter=not_in_cell)
     async def _(event):
+        nb.executing_cell = nb.current_cell
+        nb.current_cell.clear_output()
         await nb.current_cell.run(nb.kd)
-        cell_idx = nb.current_cell.idx
-        nb.focus(cell_idx + 1)
+        nb.focus(nb.current_cell.idx + 1)
 
     @kb.add("c-i", filter=not_in_cell)
     def _(event):
-        cell_idx = nb.current_cell.idx
-        nb.insert_cell(cell_idx)
+        nb.insert_cell(nb.current_cell.idx)
 
     @kb.add("c-j", filter=not_in_cell)
     def _(event):
-        cell_idx = nb.current_cell.idx + 1
-        nb.insert_cell(cell_idx)
+        nb.insert_cell(nb.current_cell.idx + 1)
 
     return kb
