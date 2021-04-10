@@ -1,13 +1,16 @@
-import click
+import typer
 
 from .notebook import Notebook
 
 
-@click.command()
-@click.argument("notebook_path", default="")
-@click.argument("kernel_spec_path", default="")
-def cli(notebook_path, kernel_spec_path):
+def main(
+    notebook_path: str = typer.Argument(""), kernel_spec_path: str = typer.Argument("")
+):
     Notebook(notebook_path, kernel_spec_path)
+
+
+def cli():
+    typer.run(main)
 
 
 if __name__ == "__main__":

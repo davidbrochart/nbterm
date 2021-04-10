@@ -4,7 +4,7 @@ channels:
 dependencies:
     - pip
     - prompt_toolkit >=3
-    - click
+    - typer
     - pygments
     - flake8
     - black
