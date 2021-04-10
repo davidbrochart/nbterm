@@ -8,7 +8,6 @@ from prompt_toolkit.layout.containers import HSplit
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit import Application
-from kernel_driver import KernelDriver
 import kernel_driver
 
 from .cell import Cell
@@ -17,7 +16,7 @@ from .key_bindings import default_kb
 
 
 class Notebook:
-    def __init__(self, nb_path, kspec_path):
+    def __init__(self, nb_path):
         self.nb_path = nb_path
         if os.path.exists(nb_path):
             read_nb(self)
@@ -31,16 +30,11 @@ class Notebook:
         self.app = Application(
             layout=self.layout, key_bindings=self.key_bindings, full_screen=True
         )
-        if not kspec_path:
-            if os.environ.get("CONDA_PREFIX"):
-                kspec_path = (
-                    os.environ["CONDA_PREFIX"]
-                    + "/share/jupyter/kernels/python3/kernel.json"
-                )
-        if kspec_path:
-            self.kd = KernelDriver(kspec_path, log=False)
+        kernel_name = self.nb_json["metadata"]["kernelspec"]["name"]
+        try:
+            self.kd = kernel_driver.KernelDriver(kernel_name=kernel_name, log=False)
             kernel_driver.driver._output_hook_default = self._output_hook
-        else:
+        except RuntimeError:
             self.kd = None
         asyncio.run(self.main())
 

@@ -3,10 +3,8 @@ import typer
 from .notebook import Notebook
 
 
-def main(
-    notebook_path: str = typer.Argument(""), kernel_spec_path: str = typer.Argument("")
-):
-    Notebook(notebook_path, kernel_spec_path)
+def main(notebook_path: str = typer.Argument("")):
+    Notebook(notebook_path)
 
 
 def cli():
