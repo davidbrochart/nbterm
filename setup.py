@@ -13,6 +13,7 @@ setup(
         "prompt-toolkit>=3",
         "typer",
         "pygments",
+        "rich",
         "kernel_driver",
     ],
     entry_points={

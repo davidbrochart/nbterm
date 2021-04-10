@@ -6,5 +6,6 @@ dependencies:
     - prompt_toolkit >=3
     - typer
     - pygments
+    - rich
     - flake8
     - black

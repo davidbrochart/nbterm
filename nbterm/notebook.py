@@ -36,6 +36,7 @@ class Notebook:
             kernel_driver.driver._output_hook_default = self._output_hook
         except RuntimeError:
             self.kd = None
+        self.focus(0)
         asyncio.run(self.main())
 
     def create_layout(self):
@@ -54,7 +55,7 @@ class Notebook:
 
     def exit_cell(self):
         self._cell_entered = False
-        self.current_cell.set_readonly()
+        self.current_cell.set_input_readonly()
 
     @property
     def current_cell(self):
@@ -66,7 +67,7 @@ class Notebook:
 
     def enter_cell(self):
         self._cell_entered = True
-        self.current_cell.set_editable()
+        self.current_cell.set_input_editable()
 
     def insert_cell(self, idx):
         cell = Cell(idx=idx)
@@ -76,7 +77,7 @@ class Notebook:
         self.create_layout()
         self.app.layout = self.layout
         self.focus(idx)
-        self.nb_json["cells"].insert(idx, self.current_cell.cell_json)
+        self.nb_json["cells"].insert(idx, self.current_cell.json)
 
     def bind_keys(self):
         self.key_bindings = default_kb(self)
