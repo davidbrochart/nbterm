@@ -1,3 +1,5 @@
+import asyncio
+
 from prompt_toolkit import ANSI
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.widgets import Frame
@@ -80,7 +82,7 @@ class Cell:
 
     def clear_output(self):
         self.output.content = FormattedTextControl(text="")
-        self.output.height = 0
+        self.output.height = 1
 
     def update_json(self):
         src_list = [line + "\n" for line in self.input_buffer.text.split("\n")]
@@ -89,8 +91,15 @@ class Cell:
         # TODO: update output
 
     async def run(self, nb):
-        if self.input_buffer.text.strip():
+        code = self.input_buffer.text.strip()
+        if code:
             self.input_prefix.content = FormattedTextControl(text="\nIn [*]:")
+        if nb.idle is None:
+            nb.idle = asyncio.Event()
+        else:
+            await nb.idle.wait()
+        nb.idle.clear()
+        if code:
             await nb.kd.execute(self.input_buffer.text)
             nb.execution_count += 1
             self.input_prefix.content = FormattedTextControl(
@@ -98,3 +107,5 @@ class Cell:
             )
             self.json["execution_count"] = nb.execution_count
             nb.app.invalidate()
+        nb.executing_cells.pop(0)
+        nb.idle.set()
