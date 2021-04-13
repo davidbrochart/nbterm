@@ -62,6 +62,14 @@ class Cell:
         line_nb = self.input_buffer.text.count("\n")
         self.input_window.height = line_nb + 1
 
+    def set_as_markdown(self):
+        self.json["cell_type"] = "markdown"
+        self.set_input_readonly()
+
+    def set_as_code(self):
+        self.json["cell_type"] = "code"
+        self.set_input_readonly()
+
     def set_input_readonly(self):
         if self.json["cell_type"] == "markdown":
             md = Markdown(self.input_buffer.text)
@@ -77,7 +85,12 @@ class Cell:
         self.input_window.height = text.count("\n")
 
     def set_input_editable(self):
-        self.input_window.content = BufferControl(buffer=self.input_buffer, lexer=lexer)
+        if self.json["cell_type"] == "code":
+            self.input_window.content = BufferControl(
+                buffer=self.input_buffer, lexer=lexer
+            )
+        else:
+            self.input_window.content = BufferControl(buffer=self.input_buffer)
         self.input_window.height = self.input_buffer.text.count("\n") + 1
 
     def clear_output(self):

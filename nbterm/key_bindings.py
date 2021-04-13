@@ -47,6 +47,14 @@ def default_kb(nb):
     def _(event):
         nb.current_cell.clear_output()
 
+    @kb.add("c-n", filter=not_in_cell)
+    def _(event):
+        nb.current_cell.set_as_markdown()
+
+    @kb.add("c-o", filter=not_in_cell)
+    def _(event):
+        nb.current_cell.set_as_code()
+
     @kb.add("c-e", filter=not_in_cell)
     async def _(event):
         nb.executing_cells.append(nb.current_cell)
