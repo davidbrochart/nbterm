@@ -15,21 +15,27 @@ lexer = PygmentsLexer(PythonLexer)
 console = Console()
 
 
+EMPTY_PREFIX = Window(width=10)
+
+
 class Cell:
     def __init__(self, idx=0, cell_json=None):
         # TODO: create cell of type other than code
         if cell_json is None:
             cell_json = {
                 "cell_type": "code",
-                "execution_count": 1,
+                "execution_count": None,
                 "metadata": {},
                 "source": [],
                 "outputs": [],
             }
-        if cell_json["cell_type"] == "markdown":
-            input_text = "".join(cell_json["source"])
-        elif cell_json["cell_type"] == "code":
-            input_text = "".join(cell_json["source"])
+        self.input_prefix = Window(width=10)
+        input_text = "".join(cell_json["source"])
+        if cell_json["cell_type"] == "code":
+            execution_count = cell_json["execution_count"] or " "
+            self.input_prefix.content = FormattedTextControl(
+                text=f"\nIn [{execution_count}]:"
+            )
         if "outputs" in cell_json:
             outputs = cell_json["outputs"]
         else:
@@ -82,5 +88,13 @@ class Cell:
         self.json["source"] = src_list
         # TODO: update output
 
-    async def run(self, kd):
-        await kd.execute(self.input_buffer.text)
+    async def run(self, nb):
+        if self.input_buffer.text.strip():
+            self.input_prefix.content = FormattedTextControl(text="\nIn [*]:")
+            await nb.kd.execute(self.input_buffer.text)
+            nb.execution_count += 1
+            self.input_prefix.content = FormattedTextControl(
+                text=f"\nIn [{nb.execution_count}]:"
+            )
+            self.json["execution_count"] = nb.execution_count
+            nb.app.invalidate()

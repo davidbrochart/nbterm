@@ -51,7 +51,7 @@ def default_kb(nb):
     async def _(event):
         nb.executing_cell = nb.current_cell
         nb.executing_cell.clear_output()
-        await nb.executing_cell.run(nb.kd)
+        await nb.executing_cell.run(nb)
 
     @kb.add("c-r", filter=not_in_cell)
     async def _(event):
@@ -60,7 +60,7 @@ def default_kb(nb):
         if nb.executing_cell.idx == len(nb.cells) - 1:
             nb.insert_cell(nb.executing_cell.idx + 1)
         nb.focus(nb.executing_cell.idx + 1)
-        await nb.executing_cell.run(nb.kd)
+        await nb.executing_cell.run(nb)
 
     @kb.add("c-i", filter=not_in_cell)
     def _(event):

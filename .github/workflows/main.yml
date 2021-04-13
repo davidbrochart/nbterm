@@ -37,7 +37,6 @@ jobs:
     - name: Install nbterm
       run: |
         pip install -e .
-        pip install https://github.com/davidbrochart/kernel_driver/archive/main.zip --ignore-installed 
 
     - name: Check style
       run: |

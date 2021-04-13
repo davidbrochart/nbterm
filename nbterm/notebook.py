@@ -4,13 +4,13 @@ import asyncio
 
 from prompt_toolkit import ANSI
 from prompt_toolkit.layout import ScrollablePane
-from prompt_toolkit.layout.containers import HSplit
+from prompt_toolkit.layout.containers import HSplit, VSplit
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit import Application
 import kernel_driver
 
-from .cell import Cell
+from .cell import Cell, EMPTY_PREFIX
 from .format import read_nb, create_nb
 from .key_bindings import default_kb
 
@@ -37,12 +37,19 @@ class Notebook:
         except RuntimeError:
             self.kd = None
         self.focus(0)
+        self.execution_count = 0
         asyncio.run(self.main())
 
     def create_layout(self):
         inout_cells = list(
             itertools.chain.from_iterable(
-                [(cell.input, cell.output) for cell in self.cells]
+                [
+                    (
+                        VSplit([cell.input_prefix, cell.input]),
+                        VSplit([EMPTY_PREFIX, cell.output]),
+                    )
+                    for cell in self.cells
+                ]
             )
         )
         root_container = ScrollablePane(HSplit(inout_cells))
