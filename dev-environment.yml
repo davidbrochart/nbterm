@@ -3,7 +3,7 @@ channels:
     - conda-forge
 dependencies:
     - pip
-    - prompt_toolkit >=3
+    - prompt_toolkit >=3.0.16
     - typer
     - pygments
     - rich

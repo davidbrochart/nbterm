@@ -10,7 +10,7 @@ setup(
     packages=["nbterm"],
     python_requires=">=3.7",
     install_requires=[
-        "prompt-toolkit>=3",
+        "prompt-toolkit>=3.0.16",
         "typer",
         "pygments",
         "rich",
