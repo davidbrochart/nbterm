@@ -25,7 +25,7 @@ class DefaultKeyBindings:
         def c_s(event):
             self.save_nb()
 
-        @self.key_bindings.add("escape", filter=in_cell)
+        @self.key_bindings.add("escape", filter=in_cell, eager=True)
         def escape(event):
             self.current_cell.update_json()
             self.exit_cell()
