@@ -68,10 +68,18 @@ class Cell:
 
     def set_as_markdown(self):
         self.json["cell_type"] = "markdown"
+        if "outputs" in self.json:
+            del self.json["outputs"]
+        if "execution_count" in self.json:
+            del self.json["execution_count"]
         self.set_input_readonly()
 
     def set_as_code(self):
         self.json["cell_type"] = "code"
+        if "outputs" not in self.json:
+            self.json["outputs"] = []
+        if "execution_count" not in self.json:
+            self.json["execution_count"] = None
         self.set_input_readonly()
 
     def set_input_readonly(self):
@@ -108,21 +116,22 @@ class Cell:
         # TODO: update output
 
     async def run(self):
-        code = self.input_buffer.text.strip()
-        if code:
-            self.input_prefix.content = FormattedTextControl(text="\nIn [*]:")
-        if self.notebook.idle is None:
-            self.notebook.idle = asyncio.Event()
-        else:
-            await self.notebook.idle.wait()
-        self.notebook.idle.clear()
-        if code:
-            await self.notebook.kd.execute(self.input_buffer.text)
-            self.notebook.execution_count += 1
-            self.input_prefix.content = FormattedTextControl(
-                text=f"\nIn [{self.notebook.execution_count}]:"
-            )
-            self.json["execution_count"] = self.notebook.execution_count
-            self.notebook.app.invalidate()
-        self.notebook.executing_cells.pop(0)
-        self.notebook.idle.set()
+        if self.json["cell_type"] == "code":
+            code = self.input_buffer.text.strip()
+            if code:
+                self.input_prefix.content = FormattedTextControl(text="\nIn [*]:")
+            if self.notebook.idle is None:
+                self.notebook.idle = asyncio.Event()
+            else:
+                await self.notebook.idle.wait()
+            self.notebook.idle.clear()
+            if code:
+                await self.notebook.kd.execute(self.input_buffer.text)
+                self.notebook.execution_count += 1
+                self.input_prefix.content = FormattedTextControl(
+                    text=f"\nIn [{self.notebook.execution_count}]:"
+                )
+                self.json["execution_count"] = self.notebook.execution_count
+                self.notebook.app.invalidate()
+            self.notebook.executing_cells.pop(0)
+            self.notebook.idle.set()
