@@ -86,7 +86,7 @@ class Cell:
                 console.print(code)
             text = capture.get()
         self.input_window.content = FormattedTextControl(text=ANSI(text))
-        self.input_window.height = text.count("\n")
+        self.input_window.height = text.count("\n") or 1
 
     def set_input_editable(self):
         if self.json["cell_type"] == "code":
