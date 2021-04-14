@@ -16,6 +16,13 @@ setup(
         "rich",
         "kernel_driver",
     ],
+    extras_require={
+        "test": [
+            "mypy",
+            "flake8",
+            "black",
+        ],
+    },
     entry_points={
         "console_scripts": ["nbterm = nbterm.nbterm:cli"],
     },

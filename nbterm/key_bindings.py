@@ -1,81 +1,78 @@
 import asyncio
 
 from prompt_toolkit.filters import Condition
-from prompt_toolkit.key_binding import KeyBindings
-
-from .format import save_nb
 
 
-def default_kb(nb):
-    kb = KeyBindings()
+class DefaultKeyBindings:
 
-    @Condition
-    def in_cell():
-        return nb.cell_entered
+    cell_entered: bool
 
-    @Condition
-    def not_in_cell():
-        return not nb.cell_entered
+    def bind_keys(self):
+        @Condition
+        def in_cell() -> bool:
+            return self.cell_entered
 
-    @kb.add("c-q", filter=not_in_cell)
-    def _(event):
-        asyncio.create_task(nb.kd.stop())
-        nb.app.exit()
+        @Condition
+        def not_in_cell() -> bool:
+            return not self.cell_entered
 
-    @kb.add("c-s", filter=not_in_cell)
-    def _(event):
-        save_nb(nb)
+        @self.key_bindings.add("c-q", filter=not_in_cell)
+        def c_q(event):
+            asyncio.create_task(self.kd.stop())
+            self.app.exit()
 
-    @kb.add("escape", filter=in_cell)
-    def _(event):
-        nb.current_cell.update_json()
-        nb.exit_cell()
+        @self.key_bindings.add("c-s", filter=not_in_cell)
+        def c_s(event):
+            self.save_nb()
 
-    @kb.add("up", filter=not_in_cell)
-    def _(event):
-        nb.focus(nb.current_cell.idx - 1)
+        @self.key_bindings.add("escape", filter=in_cell)
+        def escape(event):
+            self.current_cell.update_json()
+            self.exit_cell()
 
-    @kb.add("down", filter=not_in_cell)
-    def _(event):
-        nb.focus(nb.current_cell.idx + 1)
+        @self.key_bindings.add("up", filter=not_in_cell)
+        def up(event):
+            self.focus(self.current_cell.idx - 1)
 
-    @kb.add("enter", filter=not_in_cell)
-    def _(event):
-        nb.enter_cell()
+        @self.key_bindings.add("down", filter=not_in_cell)
+        def down(event):
+            self.focus(self.current_cell.idx + 1)
 
-    @kb.add("c-l", filter=not_in_cell)
-    def _(event):
-        nb.current_cell.clear_output()
+        @self.key_bindings.add("enter", filter=not_in_cell)
+        def enter(event):
+            self.enter_cell()
 
-    @kb.add("c-n", filter=not_in_cell)
-    def _(event):
-        nb.current_cell.set_as_markdown()
+        @self.key_bindings.add("c-l", filter=not_in_cell)
+        def c_l(event):
+            self.current_cell.clear_output()
 
-    @kb.add("c-o", filter=not_in_cell)
-    def _(event):
-        nb.current_cell.set_as_code()
+        @self.key_bindings.add("c-n", filter=not_in_cell)
+        def c_n(event):
+            self.current_cell.set_as_markdown()
 
-    @kb.add("c-e", filter=not_in_cell)
-    async def _(event):
-        nb.executing_cells.append(nb.current_cell)
-        nb.current_cell.clear_output()
-        await nb.current_cell.run(nb)
+        @self.key_bindings.add("c-o", filter=not_in_cell)
+        def c_o(event):
+            self.current_cell.set_as_code()
 
-    @kb.add("c-r", filter=not_in_cell)
-    async def _(event):
-        nb.executing_cells.append(nb.current_cell)
-        nb.current_cell.clear_output()
-        if nb.current_cell.idx == len(nb.cells) - 1:
-            nb.insert_cell(nb.current_cell.idx + 1)
-        nb.focus(nb.current_cell.idx + 1)
-        await nb.executing_cells[-1].run(nb)
+        @self.key_bindings.add("c-e", filter=not_in_cell)
+        async def c_e(event):
+            self.executing_cells.append(self.current_cell)
+            self.current_cell.clear_output()
+            await self.current_cell.run()
 
-    @kb.add("c-i", filter=not_in_cell)
-    def _(event):
-        nb.insert_cell(nb.current_cell.idx)
+        @self.key_bindings.add("c-r", filter=not_in_cell)
+        async def c_r(event):
+            self.executing_cells.append(self.current_cell)
+            self.current_cell.clear_output()
+            if self.current_cell.idx == len(self.cells) - 1:
+                self.insert_cell(self.current_cell.idx + 1)
+            self.focus(self.current_cell.idx + 1)
+            await self.executing_cells[-1].run()
 
-    @kb.add("c-j", filter=not_in_cell)
-    def _(event):
-        nb.insert_cell(nb.current_cell.idx + 1)
+        @self.key_bindings.add("c-i", filter=not_in_cell)
+        def c_i(event):
+            self.insert_cell(self.current_cell.idx)
 
-    return kb
+        @self.key_bindings.add("c-j", filter=not_in_cell)
+        def c_j(event):
+            self.insert_cell(self.current_cell.idx + 1)

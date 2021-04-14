@@ -45,4 +45,5 @@ jobs:
 
     - name: Run tests
       run: |
+        mypy nbterm
         nbterm --help

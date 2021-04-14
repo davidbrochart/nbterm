@@ -1,6 +1,6 @@
 import typer
 
-from .notebook import Notebook
+from .notebook import Notebook  # type: ignore
 
 
 def main(notebook_path: str = typer.Argument("")):

@@ -1,33 +1,38 @@
 import os
 import itertools
 import asyncio
+from typing import List, Dict, Any
 
 from prompt_toolkit import ANSI
+from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout import ScrollablePane
 from prompt_toolkit.layout.containers import HSplit, VSplit
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit import Application
-import kernel_driver
+import kernel_driver  # type: ignore
 
-from .cell import Cell, EMPTY_PREFIX
-from .format import read_nb, create_nb
-from .key_bindings import default_kb
+from .cell import Cell, EMPTY_PREFIX  # type: ignore
+from .format import Format  # type: ignore
+from .key_bindings import DefaultKeyBindings  # type: ignore
 
 
-class Notebook:
-    def __init__(self, nb_path):
+class Notebook(Format, DefaultKeyBindings):
+    def __init__(self, nb_path: str):
         self.nb_path = nb_path
+        self.cells: List[Cell] = []
+        self.executing_cells: List[Cell] = []
+        self.nb_json: Dict[str, Any] = {}
+        self.key_bindings = KeyBindings()
+        self.bind_keys()
         if os.path.exists(nb_path):
-            read_nb(self)
+            self.read_nb()
         else:
-            create_nb(self)
+            self.create_nb()
         self.create_layout()
         self._current_cell = self.cells[0]
-        self.executing_cells = []
         self._cell_entered = False
-        self.bind_keys()
-        self.app = Application(
+        self.app: Application = Application(
             layout=self.layout, key_bindings=self.key_bindings, full_screen=True
         )
         kernel_name = self.nb_json["metadata"]["kernelspec"]["name"]
@@ -56,7 +61,7 @@ class Notebook:
         root_container = ScrollablePane(HSplit(inout_cells))
         self.layout = Layout(root_container)
 
-    def focus(self, idx):
+    def focus(self, idx: int):
         if 0 <= idx < len(self.cells):
             self.app.layout.focus(self.cells[idx].input_window)
             self._current_cell = self.cells[idx]
@@ -77,8 +82,8 @@ class Notebook:
         self._cell_entered = True
         self.current_cell.set_input_editable()
 
-    def insert_cell(self, idx):
-        cell = Cell(idx=idx)
+    def insert_cell(self, idx: int):
+        cell = Cell(self, idx=idx)
         self.cells.insert(idx, cell)
         for cell in self.cells[idx + 1 :]:  # noqa
             cell.idx = cell.idx + 1
@@ -87,10 +92,7 @@ class Notebook:
         self.focus(idx)
         self.nb_json["cells"].insert(idx, self.current_cell.json)
 
-    def bind_keys(self):
-        self.key_bindings = default_kb(self)
-
-    def _output_hook(self, msg):
+    def _output_hook(self, msg: Dict[str, Any]):
         msg_type = msg["header"]["msg_type"]
         content = msg["content"]
         if msg_type == "stream":

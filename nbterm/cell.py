@@ -1,4 +1,5 @@
 import asyncio
+from typing import Dict, Any, Optional
 
 from prompt_toolkit import ANSI
 from prompt_toolkit.buffer import Buffer
@@ -6,22 +7,25 @@ from prompt_toolkit.widgets import Frame
 from prompt_toolkit.layout.containers import Window
 from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
 from prompt_toolkit.lexers import PygmentsLexer
-from pygments.lexers.python import PythonLexer
+from pygments.lexers.python import PythonLexer  # type: ignore
 from rich.console import Console
 from rich.syntax import Syntax
 from rich.markdown import Markdown
 
 # TODO: take language into account
-lexer = PygmentsLexer(PythonLexer)
+lexer: PygmentsLexer = PygmentsLexer(PythonLexer)
 
-console = Console()
+console: Console = Console()
 
 
-EMPTY_PREFIX = Window(width=10)
+EMPTY_PREFIX: Window = Window(width=10)
 
 
 class Cell:
-    def __init__(self, idx=0, cell_json=None):
+    def __init__(
+        self, notebook, idx: int = 0, cell_json: Optional[Dict[str, Any]] = None
+    ):
+        self.notebook = notebook
         # TODO: create cell of type other than code
         if cell_json is None:
             cell_json = {
@@ -103,22 +107,22 @@ class Cell:
         self.json["source"] = src_list
         # TODO: update output
 
-    async def run(self, nb):
+    async def run(self):
         code = self.input_buffer.text.strip()
         if code:
             self.input_prefix.content = FormattedTextControl(text="\nIn [*]:")
-        if nb.idle is None:
-            nb.idle = asyncio.Event()
+        if self.notebook.idle is None:
+            self.notebook.idle = asyncio.Event()
         else:
-            await nb.idle.wait()
-        nb.idle.clear()
+            await self.notebook.idle.wait()
+        self.notebook.idle.clear()
         if code:
-            await nb.kd.execute(self.input_buffer.text)
-            nb.execution_count += 1
+            await self.notebook.kd.execute(self.input_buffer.text)
+            self.notebook.execution_count += 1
             self.input_prefix.content = FormattedTextControl(
-                text=f"\nIn [{nb.execution_count}]:"
+                text=f"\nIn [{self.notebook.execution_count}]:"
             )
-            self.json["execution_count"] = nb.execution_count
-            nb.app.invalidate()
-        nb.executing_cells.pop(0)
-        nb.idle.set()
+            self.json["execution_count"] = self.notebook.execution_count
+            self.notebook.app.invalidate()
+        self.notebook.executing_cells.pop(0)
+        self.notebook.idle.set()

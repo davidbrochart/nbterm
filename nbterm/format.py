@@ -1,48 +1,50 @@
 import json
 
-from .cell import Cell
+from .cell import Cell  # type: ignore
 
 
-def read_nb(nb):
-    with open(nb.nb_path) as f:
-        nb.nb_json = json.load(f)
-    nb.cells = [
-        Cell(idx=idx, cell_json=nb.nb_json["cells"][idx])
-        for idx, cell in enumerate(nb.nb_json["cells"])
-    ]
+class Format:
 
+    nb_path: str
 
-def save_nb(nb):
-    if nb.nb_path:
-        with open(nb.nb_path, "wt") as f:
-            json.dump(nb.nb_json, f)
+    def read_nb(self) -> None:
+        with open(self.nb_path) as f:
+            self.nb_json = json.load(f)
+        self.cells = [
+            Cell(self, idx=idx, cell_json=self.nb_json["cells"][idx])
+            for idx, cell in enumerate(self.nb_json["cells"])
+        ]
 
+    def save_nb(self) -> None:
+        if self.nb_path:
+            with open(self.nb_path, "wt") as f:
+                json.dump(self.nb_json, f)
 
-def create_nb(nb):
-    nb.nb_json = {
-        "cells": [
-            {
-                "cell_type": "code",
-                "execution_count": 0,
-                "metadata": {},
-                "source": [],
-                "outputs": [],
-            }
-        ],
-        "metadata": {
-            "kernelspec": {
-                "display_name": "Python 3",
-                "language": "python",
-                "name": "python3",
+    def create_nb(self) -> None:
+        self.nb_json = {
+            "cells": [
+                {
+                    "cell_type": "code",
+                    "execution_count": 0,
+                    "metadata": {},
+                    "source": [],
+                    "outputs": [],
+                }
+            ],
+            "metadata": {
+                "kernelspec": {
+                    "display_name": "Python 3",
+                    "language": "python",
+                    "name": "python3",
+                },
+                "language_info": {
+                    "file_extension": ".py",
+                    "mimetype": "text/x-python",
+                    "name": "python",
+                    "version": "3.9.2",
+                },
             },
-            "language_info": {
-                "file_extension": ".py",
-                "mimetype": "text/x-python",
-                "name": "python",
-                "version": "3.9.2",
-            },
-        },
-        "nbformat": 4,
-        "nbformat_minor": 4,
-    }
-    nb.cells = [Cell(idx=0, cell_json=nb.nb_json["cells"][0])]
+            "nbformat": 4,
+            "nbformat_minor": 4,
+        }
+        self.cells = [Cell(self, idx=0, cell_json=self.nb_json["cells"][0])]
