@@ -1,5 +1,5 @@
 import asyncio
-from typing import Dict, Any, Optional
+from typing import Dict, List, Any, Optional
 
 from prompt_toolkit import ANSI
 from prompt_toolkit.buffer import Buffer
@@ -8,17 +8,40 @@ from prompt_toolkit.layout.containers import Window
 from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
 from prompt_toolkit.lexers import PygmentsLexer
 from pygments.lexers.python import PythonLexer  # type: ignore
-from rich.console import Console
 from rich.syntax import Syntax
 from rich.markdown import Markdown
+from rich.console import Console
 
 # TODO: take language into account
 lexer: PygmentsLexer = PygmentsLexer(PythonLexer)
 
-console: Console = Console()
-
 
 EMPTY_PREFIX: Window = Window(width=10)
+
+console = Console()
+
+
+def get_output_text_and_height(outputs: List[Dict[str, Any]]):
+    text_list = []
+    height = 0
+    for output in outputs:
+        if output["output_type"] == "stream":
+            text = "".join(output["text"])
+            height += text.count("\n") or 1
+            if output["name"] == "stderr":
+                with console.capture() as capture:
+                    console.print(text, style="white on red", end="")
+                text = capture.get()
+        elif output["output_type"] == "error":
+            text = "\n".join(output["traceback"])
+            height += text.count("\n") + 1
+        elif output["output_type"] == "execute_result":
+            text = "\n".join(output["data"].get("text/plain", ""))
+            height += text.count("\n") or 1
+        text_list.append(text)
+    text_ansi = ANSI("".join(text_list))
+    height = height or 1
+    return text_ansi, height
 
 
 class Cell:
@@ -26,7 +49,6 @@ class Cell:
         self, notebook, idx: int = 0, cell_json: Optional[Dict[str, Any]] = None
     ):
         self.notebook = notebook
-        # TODO: create cell of type other than code
         if cell_json is None:
             cell_json = {
                 "cell_type": "code",
@@ -47,20 +69,15 @@ class Cell:
         else:
             outputs = []
         self.json = cell_json
-        output_text = ""
-        for output in outputs:
-            if "text" in output:
-                output_text += "".join(output["text"])
-            elif "traceback" in output:
-                output_text += "".join(output["traceback"])
+        output_text, output_height = get_output_text_and_height(outputs)
         self.idx = idx
         self.input_window = Window()
         self.input_buffer = Buffer(on_text_changed=self.input_text_changed)
         self.input_buffer.text = input_text
         self.set_input_readonly()
         self.input = Frame(self.input_window)
-        self.output = Window(content=FormattedTextControl(text=ANSI(output_text)))
-        self.output.height = output_text.count("\n") + 1
+        self.output = Window(content=FormattedTextControl(text=output_text))
+        self.output.height = output_height
 
     def input_text_changed(self, _=None):
         line_nb = self.input_buffer.text.count("\n")
@@ -108,14 +125,16 @@ class Cell:
     def clear_output(self):
         self.output.content = FormattedTextControl(text="")
         self.output.height = 1
+        if self.json["cell_type"] == "code":
+            self.json["outputs"] = []
 
     def update_json(self):
         src_list = [line + "\n" for line in self.input_buffer.text.split("\n")]
         src_list[-1] = src_list[-1][:-1]
         self.json["source"] = src_list
-        # TODO: update output
 
     async def run(self):
+        self.clear_output()
         if self.json["cell_type"] == "code":
             code = self.input_buffer.text.strip()
             if code:
@@ -127,11 +146,11 @@ class Cell:
             self.notebook.idle.clear()
             if code:
                 await self.notebook.kd.execute(self.input_buffer.text)
-                self.notebook.execution_count += 1
                 self.input_prefix.content = FormattedTextControl(
                     text=f"\nIn [{self.notebook.execution_count}]:"
                 )
                 self.json["execution_count"] = self.notebook.execution_count
+                self.notebook.execution_count += 1
                 self.notebook.app.invalidate()
-            self.notebook.executing_cells.pop(0)
             self.notebook.idle.set()
+        self.notebook.executing_cells.pop(0)

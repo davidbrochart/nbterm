@@ -18,7 +18,7 @@ class Format:
     def save_nb(self) -> None:
         if self.nb_path:
             with open(self.nb_path, "wt") as f:
-                json.dump(self.nb_json, f)
+                json.dump(self.nb_json, f, indent=1)
 
     def create_nb(self) -> None:
         self.nb_json = {

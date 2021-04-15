@@ -3,7 +3,6 @@ import itertools
 import asyncio
 from typing import List, Dict, Any
 
-from prompt_toolkit import ANSI
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout import ScrollablePane
 from prompt_toolkit.layout.containers import HSplit, VSplit
@@ -12,7 +11,7 @@ from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit import Application
 import kernel_driver  # type: ignore
 
-from .cell import Cell, EMPTY_PREFIX  # type: ignore
+from .cell import Cell, EMPTY_PREFIX, get_output_text_and_height  # type: ignore
 from .format import Format  # type: ignore
 from .key_bindings import DefaultKeyBindings  # type: ignore
 
@@ -38,11 +37,11 @@ class Notebook(Format, DefaultKeyBindings):
         kernel_name = self.nb_json["metadata"]["kernelspec"]["name"]
         try:
             self.kd = kernel_driver.KernelDriver(kernel_name=kernel_name, log=False)
-            kernel_driver.driver._output_hook_default = self._output_hook
+            kernel_driver.driver._output_hook_default = self.output_hook
         except RuntimeError:
             self.kd = None
         self.focus(0)
-        self.execution_count = 0
+        self.execution_count = 1
         self.idle = None
         asyncio.run(self.main())
 
@@ -92,22 +91,37 @@ class Notebook(Format, DefaultKeyBindings):
         self.focus(idx)
         self.nb_json["cells"].insert(idx, self.current_cell.json)
 
-    def _output_hook(self, msg: Dict[str, Any]):
+    def output_hook(self, msg: Dict[str, Any]):
         msg_type = msg["header"]["msg_type"]
         content = msg["content"]
+        outputs = self.executing_cells[0].json["outputs"]
         if msg_type == "stream":
-            text = self.executing_cells[0].output.content.text
-            text += content["text"]
-            height = text.count("\n") + 1
+            if (not outputs) or (outputs[-1]["name"] != content["name"]):
+                outputs.append(
+                    {"name": content["name"], "output_type": msg_type, "text": []}
+                )
+            outputs[-1]["text"].append(content["text"])
         elif msg_type in ("display_data", "execute_result"):
-            text = content["data"].get("text/plain", "")
-            height = text.count("\n") + 1
+            outputs.append(
+                {
+                    "data": {"text/plain": [content["data"].get("text/plain", "")]},
+                    "execution_count": self.execution_count,
+                    "metadata": {},
+                    "output_type": msg_type,
+                }
+            )
         elif msg_type == "error":
-            text = "\n".join(content["traceback"])
-            height = text.count("\n") + 1
-            text = ANSI(text)
+            outputs.append(
+                {
+                    "ename": content["ename"],
+                    "evalue": content["evalue"],
+                    "output_type": "error",
+                    "traceback": content["traceback"],
+                }
+            )
         else:
             return
+        text, height = get_output_text_and_height(outputs)
         self.executing_cells[0].output.content = FormattedTextControl(text=text)
         self.executing_cells[0].output.height = height
         self.app.invalidate()

@@ -57,13 +57,11 @@ class DefaultKeyBindings:
         @self.key_bindings.add("c-e", filter=not_in_cell)
         async def c_e(event):
             self.executing_cells.append(self.current_cell)
-            self.current_cell.clear_output()
             await self.current_cell.run()
 
         @self.key_bindings.add("c-r", filter=not_in_cell)
         async def c_r(event):
             self.executing_cells.append(self.current_cell)
-            self.current_cell.clear_output()
             if self.current_cell.idx == len(self.cells) - 1:
                 self.insert_cell(self.current_cell.idx + 1)
             self.focus(self.current_cell.idx + 1)
