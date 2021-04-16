@@ -1,10 +1,10 @@
 import asyncio
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Union
 
 from prompt_toolkit import ANSI
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.widgets import Frame
-from prompt_toolkit.layout.containers import Window
+from prompt_toolkit.layout.containers import Window, HSplit, VSplit
 from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
 from prompt_toolkit.lexers import PygmentsLexer
 from pygments.lexers.python import PythonLexer  # type: ignore
@@ -15,7 +15,8 @@ from rich.markdown import Markdown
 lexer: PygmentsLexer = PygmentsLexer(PythonLexer)
 
 
-ONE_CHARACTER: Window = Window(width=1)
+ONE_COL: Window = Window(width=1)
+ONE_ROW: Window = Window(height=1)
 
 
 def rich_print(string, console, style="", end="\n"):
@@ -41,11 +42,13 @@ def get_output_text_and_height(outputs: List[Dict[str, Any]], console):
             height += text.count("\n") or 1
         text_list.append(text)
     text_ansi = ANSI("".join(text_list))
-    height = height or 1
     return text_ansi, height
 
 
 class Cell:
+
+    input: Union[Frame, HSplit]
+
     def __init__(
         self, notebook, idx: int = 0, cell_json: Optional[Dict[str, Any]] = None
     ):
@@ -59,7 +62,7 @@ class Cell:
                 "outputs": [],
             }
         self.input_prefix = Window(width=10)
-        self.output_prefix = Window(width=10)
+        self.output_prefix = Window(width=10, height=0)
         input_text = "".join(cell_json["source"])
         if cell_json["cell_type"] == "code":
             execution_count = cell_json["execution_count"] or " "
@@ -92,7 +95,12 @@ class Cell:
         self.input_buffer = Buffer(on_text_changed=self.input_text_changed)
         self.input_buffer.text = input_text
         self.set_input_readonly()
-        self.input = Frame(self.input_window)
+        if self.json["cell_type"] == "markdown":
+            self.input = HSplit(
+                [ONE_ROW, VSplit([ONE_COL, self.input_window]), ONE_ROW]
+            )
+        else:
+            self.input = Frame(self.input_window)
         self.output = Window(content=FormattedTextControl(text=output_text))
         self.output.height = output_height
 
@@ -101,7 +109,8 @@ class Cell:
         self.input_window.height = line_nb + 1
 
     def set_as_markdown(self):
-        if self.json["cell_type"] != "markdown":
+        prev_cell_type = self.json["cell_type"]
+        if prev_cell_type != "markdown":
             self.json["cell_type"] = "markdown"
             if "outputs" in self.json:
                 del self.json["outputs"]
@@ -110,19 +119,33 @@ class Cell:
             self.input_prefix.content = FormattedTextControl(text="")
             self.clear_output()
             self.set_input_readonly()
+            if prev_cell_type == "code":
+                self.input = HSplit(
+                    [ONE_ROW, VSplit([ONE_COL, self.input_window]), ONE_ROW]
+                )
+                self.notebook.create_layout()
+                self.notebook.app.layout = self.notebook.layout
+                self.notebook.focus(self.idx)
 
     def set_as_code(self):
-        if self.json["cell_type"] != "code":
+        prev_cell_type = self.json["cell_type"]
+        if prev_cell_type != "code":
             self.json["cell_type"] = "code"
             self.json["outputs"] = []
             self.json["execution_count"] = None
             text = rich_print("\nIn [ ]:", self.notebook.console, style="green", end="")
             self.input_prefix.content = FormattedTextControl(text=ANSI(text))
             self.set_input_readonly()
+            if prev_cell_type == "markdown":
+                self.input = Frame(self.input_window)
+                self.notebook.create_layout()
+                self.notebook.app.layout = self.notebook.layout
+                self.notebook.focus(self.idx)
 
     def set_input_readonly(self):
         if self.json["cell_type"] == "markdown":
-            md = Markdown(self.input_buffer.text)
+            text = self.input_buffer.text or "Type *Markdown*"
+            md = Markdown(text)
             text = rich_print(md, self.notebook.console)
         elif self.json["cell_type"] == "code":
             code = Syntax(self.input_buffer.text, "python")
@@ -141,8 +164,9 @@ class Cell:
 
     def clear_output(self):
         self.output.content = FormattedTextControl(text="")
-        self.output.height = 1
+        self.output.height = 0
         self.output_prefix.content = FormattedTextControl(text="")
+        self.output_prefix.height = 0
         if self.json["cell_type"] == "code":
             self.json["outputs"] = []
 

@@ -13,7 +13,7 @@ from prompt_toolkit import Application
 from rich.console import Console
 import kernel_driver  # type: ignore
 
-from .cell import Cell, ONE_CHARACTER, rich_print, get_output_text_and_height  # type: ignore
+from .cell import Cell, ONE_COL, rich_print, get_output_text_and_height  # type: ignore
 from .format import Format  # type: ignore
 from .key_bindings import DefaultKeyBindings  # type: ignore
 
@@ -54,7 +54,7 @@ class Notebook(Format, DefaultKeyBindings):
                 [
                     (
                         VSplit([cell.input_prefix, cell.input]),
-                        VSplit([cell.output_prefix, ONE_CHARACTER, cell.output]),
+                        VSplit([cell.output_prefix, ONE_COL, cell.output]),
                     )
                     for cell in self.cells
                 ]
