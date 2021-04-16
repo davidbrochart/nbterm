@@ -199,6 +199,7 @@ class Cell:
                 self.input_prefix.content = FormattedTextControl(text=ANSI(text))
                 self.json["execution_count"] = self.notebook.execution_count
                 self.notebook.execution_count += 1
-                self.notebook.app.invalidate()
+                if self.notebook.app:
+                    self.notebook.app.invalidate()
                 self.notebook.idle.set()
         self.notebook.executing_cells.pop(0)

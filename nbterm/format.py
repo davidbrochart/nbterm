@@ -15,10 +15,12 @@ class Format:
             for idx, cell in enumerate(self.nb_json["cells"])
         ]
 
-    def save_nb(self) -> None:
-        if self.nb_path:
-            with open(self.nb_path, "wt") as f:
+    def save_nb(self, path: str = "") -> None:
+        path = path or self.nb_path
+        if path:
+            with open(path, "wt") as f:
                 json.dump(self.nb_json, f, indent=1)
+                f.write("\n")
 
     def create_nb(self) -> None:
         self.nb_json = {

@@ -47,3 +47,4 @@ jobs:
       run: |
         mypy nbterm
         nbterm --help
+        py.test nbterm/tests

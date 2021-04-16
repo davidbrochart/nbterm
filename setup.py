@@ -21,6 +21,8 @@ setup(
             "mypy",
             "flake8",
             "black",
+            "pytest",
+            "ipykernel",
         ],
     },
     entry_points={

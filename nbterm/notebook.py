@@ -1,7 +1,7 @@
 import os
 import itertools
 import asyncio
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional, cast
 
 from prompt_toolkit import ANSI
 from prompt_toolkit.key_binding import KeyBindings
@@ -19,34 +19,43 @@ from .key_bindings import DefaultKeyBindings  # type: ignore
 
 
 class Notebook(Format, DefaultKeyBindings):
+
+    app: Optional[Application]
+
     def __init__(self, nb_path: str):
         self.console = Console()
         self.nb_path = nb_path
         self.cells: List[Cell] = []
         self.executing_cells: List[Cell] = []
         self.nb_json: Dict[str, Any] = {}
-        self.key_bindings = KeyBindings()
-        self.bind_keys()
         if os.path.exists(nb_path):
             self.read_nb()
         else:
             self.create_nb()
-        self.create_layout()
-        self._current_cell = self.cells[0]
-        self._cell_entered = False
-        self.app: Application = Application(
-            layout=self.layout, key_bindings=self.key_bindings, full_screen=True
-        )
         kernel_name = self.nb_json["metadata"]["kernelspec"]["name"]
         try:
             self.kd = kernel_driver.KernelDriver(kernel_name=kernel_name, log=False)
             kernel_driver.driver._output_hook_default = self.output_hook
         except RuntimeError:
             self.kd = None
-        self.focus(0)
         self.execution_count = 1
         self.idle = None
-        asyncio.run(self.main())
+        self.current_cell = self.cells[0]
+
+    def run(self):
+        self.app = None
+        asyncio.run(self._run())
+
+    def show(self):
+        self.key_bindings = KeyBindings()
+        self.bind_keys()
+        self.create_layout()
+        self.cell_entered = False
+        self.app: Application = Application(
+            layout=self.layout, key_bindings=self.key_bindings, full_screen=True
+        )
+        self.focus(0)
+        asyncio.run(self._show())
 
     def create_layout(self):
         inout_cells = list(
@@ -65,23 +74,16 @@ class Notebook(Format, DefaultKeyBindings):
 
     def focus(self, idx: int):
         if 0 <= idx < len(self.cells):
-            self.app.layout.focus(self.cells[idx].input_window)
-            self._current_cell = self.cells[idx]
+            if self.app:
+                self.app.layout.focus(self.cells[idx].input_window)
+            self.current_cell = self.cells[idx]
 
     def exit_cell(self):
-        self._cell_entered = False
+        self.cell_entered = False
         self.current_cell.set_input_readonly()
 
-    @property
-    def current_cell(self):
-        return self._current_cell
-
-    @property
-    def cell_entered(self):
-        return self._cell_entered
-
     def enter_cell(self):
-        self._cell_entered = True
+        self.cell_entered = True
         self.current_cell.set_input_editable()
 
     def insert_cell(self, idx: int):
@@ -90,6 +92,7 @@ class Notebook(Format, DefaultKeyBindings):
         for cell in self.cells[idx + 1 :]:  # noqa
             cell.idx = cell.idx + 1
         self.create_layout()
+        self.app = cast(Application, self.app)
         self.app.layout = self.layout
         self.focus(idx)
         self.nb_json["cells"].insert(idx, self.current_cell.json)
@@ -133,9 +136,27 @@ class Notebook(Format, DefaultKeyBindings):
         text, height = get_output_text_and_height(outputs, self.console)
         self.executing_cells[0].output.content = FormattedTextControl(text=text)
         self.executing_cells[0].output.height = height
-        self.app.invalidate()
+        if self.app:
+            self.app.invalidate()
 
-    async def main(self):
+    @property
+    def run_notebook_path(self):
+        return self._run_notebook_path
+
+    async def _run(self):
+        await self.kd.start()
+        while True:
+            self.executing_cells = [self.current_cell]
+            await self.current_cell.run()
+            if self.current_cell.idx == len(self.cells) - 1:
+                break
+            self.focus(self.current_cell.idx + 1)
+        i = self.nb_path.rfind(".")
+        self._run_notebook_path = self.nb_path[:i] + "_run" + self.nb_path[i:]
+        print(self._run_notebook_path)
+        self.save_nb(self._run_notebook_path)
+
+    async def _show(self):
         if self.kd:
             asyncio.create_task(self.kd.start())
         await self.app.run_async()
