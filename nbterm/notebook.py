@@ -3,21 +3,24 @@ import itertools
 import asyncio
 from typing import List, Dict, Any
 
+from prompt_toolkit import ANSI
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout import ScrollablePane
 from prompt_toolkit.layout.containers import HSplit, VSplit
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit import Application
+from rich.console import Console
 import kernel_driver  # type: ignore
 
-from .cell import Cell, EMPTY_PREFIX, get_output_text_and_height  # type: ignore
+from .cell import Cell, ONE_CHARACTER, get_output_text_and_height  # type: ignore
 from .format import Format  # type: ignore
 from .key_bindings import DefaultKeyBindings  # type: ignore
 
 
 class Notebook(Format, DefaultKeyBindings):
     def __init__(self, nb_path: str):
+        self.console = Console()
         self.nb_path = nb_path
         self.cells: List[Cell] = []
         self.executing_cells: List[Cell] = []
@@ -51,7 +54,7 @@ class Notebook(Format, DefaultKeyBindings):
                 [
                     (
                         VSplit([cell.input_prefix, cell.input]),
-                        VSplit([EMPTY_PREFIX, cell.output]),
+                        VSplit([cell.output_prefix, ONE_CHARACTER, cell.output]),
                     )
                     for cell in self.cells
                 ]
@@ -110,6 +113,12 @@ class Notebook(Format, DefaultKeyBindings):
                     "output_type": msg_type,
                 }
             )
+            with self.console.capture() as capture:
+                self.console.print(f"Out[{self.execution_count}]:", style="red", end="")
+            text = capture.get()
+            self.executing_cells[0].output_prefix.content = FormattedTextControl(
+                text=ANSI(text)
+            )
         elif msg_type == "error":
             outputs.append(
                 {
@@ -121,7 +130,7 @@ class Notebook(Format, DefaultKeyBindings):
             )
         else:
             return
-        text, height = get_output_text_and_height(outputs)
+        text, height = get_output_text_and_height(outputs, self.console)
         self.executing_cells[0].output.content = FormattedTextControl(text=text)
         self.executing_cells[0].output.height = height
         self.app.invalidate()
