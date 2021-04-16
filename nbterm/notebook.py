@@ -13,7 +13,7 @@ from prompt_toolkit import Application
 from rich.console import Console
 import kernel_driver  # type: ignore
 
-from .cell import Cell, ONE_CHARACTER, get_output_text_and_height  # type: ignore
+from .cell import Cell, ONE_CHARACTER, rich_print, get_output_text_and_height  # type: ignore
 from .format import Format  # type: ignore
 from .key_bindings import DefaultKeyBindings  # type: ignore
 
@@ -113,9 +113,9 @@ class Notebook(Format, DefaultKeyBindings):
                     "output_type": msg_type,
                 }
             )
-            with self.console.capture() as capture:
-                self.console.print(f"Out[{self.execution_count}]:", style="red", end="")
-            text = capture.get()
+            text = rich_print(
+                f"Out[{self.execution_count}]:", self.console, style="red", end=""
+            )
             self.executing_cells[0].output_prefix.content = FormattedTextControl(
                 text=ANSI(text)
             )
