@@ -139,12 +139,11 @@ class Cell:
             code = self.input_buffer.text.strip()
             if code:
                 self.input_prefix.content = FormattedTextControl(text="\nIn [*]:")
-            if self.notebook.idle is None:
-                self.notebook.idle = asyncio.Event()
-            else:
-                await self.notebook.idle.wait()
-            self.notebook.idle.clear()
-            if code:
+                if self.notebook.idle is None:
+                    self.notebook.idle = asyncio.Event()
+                else:
+                    await self.notebook.idle.wait()
+                self.notebook.idle.clear()
                 await self.notebook.kd.execute(self.input_buffer.text)
                 self.input_prefix.content = FormattedTextControl(
                     text=f"\nIn [{self.notebook.execution_count}]:"
@@ -152,5 +151,5 @@ class Cell:
                 self.json["execution_count"] = self.notebook.execution_count
                 self.notebook.execution_count += 1
                 self.notebook.app.invalidate()
-            self.notebook.idle.set()
+                self.notebook.idle.set()
         self.notebook.executing_cells.pop(0)
