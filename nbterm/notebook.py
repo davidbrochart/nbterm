@@ -169,7 +169,6 @@ class Notebook(Format, DefaultKeyBindings):
             self.focus(self.current_cell.idx + 1)
         i = self.nb_path.rfind(".")
         self._run_notebook_path = self.nb_path[:i] + "_run" + self.nb_path[i:]
-        print(self._run_notebook_path)
         self.save_nb(self._run_notebook_path)
 
     async def _show(self):

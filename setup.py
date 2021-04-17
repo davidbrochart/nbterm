@@ -1,8 +1,14 @@
+import os
 from setuptools import setup
+
+here = os.path.abspath(os.path.dirname(__file__))
+version_ns = {}
+with open(os.path.join(here, "nbterm", "_version.py")) as f:
+    exec(f.read(), {}, version_ns)
 
 setup(
     name="nbterm",
-    version="0.0.3",
+    version=version_ns["__version__"],
     url="https://github.com/davidbrochart/nbterm.git",
     author="David Brochart",
     author_email="david.brochart@gmail.com",
