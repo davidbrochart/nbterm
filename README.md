@@ -17,6 +17,7 @@ When in notebook mode:
 - `up` and `down` arrows: navigate through cells.
 - `ctrl-i`: insert a new cell before the current one.
 - `ctrl-j`: insert a new cell after the current one.
+- `ctrl-d`: delete the cell.
 - `ctrl-o`: set the cell type to Code.
 - `ctrl-n`: set the cell type to Markdown.
 - `ctrl-l`: clear the output of the cell.

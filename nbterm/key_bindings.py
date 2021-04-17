@@ -67,6 +67,10 @@ class DefaultKeyBindings:
             self.focus(self.current_cell.idx + 1)
             await self.executing_cells[-1].run()
 
+        @self.key_bindings.add("c-d", filter=not_in_cell)
+        def c_d(event):
+            self.delete_cell(self.current_cell.idx)
+
         @self.key_bindings.add("c-i", filter=not_in_cell)
         def c_i(event):
             self.insert_cell(self.current_cell.idx)

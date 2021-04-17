@@ -86,6 +86,22 @@ class Notebook(Format, DefaultKeyBindings):
         self.cell_entered = True
         self.current_cell.set_input_editable()
 
+    def delete_cell(self, idx: int):
+        del self.cells[idx]
+        del self.nb_json["cells"][idx]
+        if not self.cells:
+            self.cells = [Cell(self, idx=0)]
+            self.nb_json["cells"] = [self.current_cell.json]
+        elif idx == len(self.cells):
+            idx -= 1
+        else:
+            for cell in self.cells[idx:]:
+                cell.idx = cell.idx - 1
+        self.create_layout()
+        self.app = cast(Application, self.app)
+        self.app.layout = self.layout
+        self.focus(idx)
+
     def insert_cell(self, idx: int):
         cell = Cell(self, idx=idx)
         self.cells.insert(idx, cell)
