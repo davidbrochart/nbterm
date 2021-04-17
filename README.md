@@ -7,7 +7,7 @@ Lets you view, edit and execute Jupyter Notebooks in the terminal.
 
 ## Key bindings
 
-There are two modes: cell mode, and notebook mode.
+There are two modes: edit mode, and command mode.
 
 - `enter`: enter the edit mode, allowing to type into the cell.
 - `esc`: exit the edit mode and enter the command mode.
