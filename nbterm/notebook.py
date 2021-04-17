@@ -13,16 +13,24 @@ from prompt_toolkit import Application
 from rich.console import Console
 import kernel_driver  # type: ignore
 
-from .cell import Cell, ONE_COL, rich_print, get_output_text_and_height  # type: ignore
-from .format import Format  # type: ignore
-from .key_bindings import DefaultKeyBindings  # type: ignore
+from .cell import (
+    Cell,
+    ONE_COL,
+    rich_print,
+    get_output_text_and_height,
+    empty_cell_json,
+)
+from .format import Format
+from .key_bindings import DefaultKeyBindings
 
 
 class Notebook(Format, DefaultKeyBindings):
 
     app: Optional[Application]
+    copied_cell: Optional[Cell]
 
     def __init__(self, nb_path: str):
+        self.copied_cell = None
         self.console = Console()
         self.nb_path = nb_path
         self.cells: List[Cell] = []
@@ -50,7 +58,7 @@ class Notebook(Format, DefaultKeyBindings):
         self.key_bindings = KeyBindings()
         self.bind_keys()
         self.create_layout()
-        self.cell_entered = False
+        self.edit_mode = False
         self.app: Application = Application(
             layout=self.layout, key_bindings=self.key_bindings, full_screen=True
         )
@@ -79,19 +87,45 @@ class Notebook(Format, DefaultKeyBindings):
             self.current_cell = self.cells[idx]
 
     def exit_cell(self):
-        self.cell_entered = False
+        self.edit_mode = False
         self.current_cell.set_input_readonly()
 
     def enter_cell(self):
-        self.cell_entered = True
+        self.edit_mode = True
         self.current_cell.set_input_editable()
 
-    def delete_cell(self, idx: int):
-        del self.cells[idx]
+    def move_up(self, idx: int):
+        if idx > 0:
+            cell = self.cells.pop(idx)
+            self.cells.insert(idx - 1, cell)
+            cell_json = self.nb_json["cells"].pop(idx)
+            self.nb_json["cells"].insert(idx - 1, cell_json)
+            self.cells[idx - 1].idx = idx - 1
+            self.cells[idx].idx = idx
+            self.create_layout()
+            self.app = cast(Application, self.app)
+            self.app.layout = self.layout
+            self.focus(idx - 1)
+
+    def move_down(self, idx: int):
+        if idx < len(self.cells) - 1:
+            cell = self.cells.pop(idx)
+            self.cells.insert(idx + 1, cell)
+            cell_json = self.nb_json["cells"].pop(idx)
+            self.nb_json["cells"].insert(idx + 1, cell_json)
+            self.cells[idx].idx = idx
+            self.cells[idx + 1].idx = idx + 1
+            self.create_layout()
+            self.app = cast(Application, self.app)
+            self.app.layout = self.layout
+            self.focus(idx + 1)
+
+    def cut_cell(self, idx: int):
+        self.copied_cell = self.cells.pop(idx)
         del self.nb_json["cells"][idx]
         if not self.cells:
             self.cells = [Cell(self, idx=0)]
-            self.nb_json["cells"] = [self.current_cell.json]
+            self.nb_json["cells"] = [empty_cell_json()]
         elif idx == len(self.cells):
             idx -= 1
         else:
@@ -102,9 +136,24 @@ class Notebook(Format, DefaultKeyBindings):
         self.app.layout = self.layout
         self.focus(idx)
 
+    def copy_cell(self, idx: int):
+        self.copied_cell = self.cells[idx]
+
+    def paste_cell(self, idx: int):
+        if self.copied_cell is not None:
+            pasted_cell = self.copied_cell.copy()
+            pasted_cell.idx = idx
+            self.cells.insert(idx, pasted_cell)
+            for cell in self.cells[idx + 1 :]:  # noqa
+                cell.idx = cell.idx + 1
+            self.create_layout()
+            self.app = cast(Application, self.app)
+            self.app.layout = self.layout
+            self.focus(idx)
+            self.nb_json["cells"].insert(idx, self.current_cell.json)
+
     def insert_cell(self, idx: int):
-        cell = Cell(self, idx=idx)
-        self.cells.insert(idx, cell)
+        self.cells.insert(idx, Cell(self, idx=idx))
         for cell in self.cells[idx + 1 :]:  # noqa
             cell.idx = cell.idx + 1
         self.create_layout()

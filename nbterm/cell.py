@@ -1,4 +1,5 @@
 import asyncio
+import copy
 from typing import Dict, List, Any, Optional, Union
 
 from prompt_toolkit import ANSI
@@ -45,6 +46,16 @@ def get_output_text_and_height(outputs: List[Dict[str, Any]], console):
     return text_ansi, height
 
 
+def empty_cell_json():
+    return {
+        "cell_type": "code",
+        "execution_count": None,
+        "metadata": {},
+        "source": [],
+        "outputs": [],
+    }
+
+
 class Cell:
 
     input: Union[Frame, HSplit]
@@ -54,13 +65,7 @@ class Cell:
     ):
         self.notebook = notebook
         if cell_json is None:
-            cell_json = {
-                "cell_type": "code",
-                "execution_count": None,
-                "metadata": {},
-                "source": [],
-                "outputs": [],
-            }
+            cell_json = empty_cell_json()
         self.input_prefix = Window(width=10)
         self.output_prefix = Window(width=10, height=0)
         input_text = "".join(cell_json["source"])
@@ -103,6 +108,11 @@ class Cell:
             self.input = Frame(self.input_window)
         self.output = Window(content=FormattedTextControl(text=output_text))
         self.output.height = output_height
+
+    def copy(self):
+        cell_json = copy.deepcopy(self.json)
+        cell = Cell(self.notebook, idx=0, cell_json=cell_json)
+        return cell
 
     def input_text_changed(self, _=None):
         line_nb = self.input_buffer.text.count("\n")

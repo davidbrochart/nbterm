@@ -3,20 +3,20 @@ from typing import Optional
 import typer
 
 from nbterm import __version__
-from .notebook import Notebook  # type: ignore
+from .notebook import Notebook
 
 
 def version_callback(value: bool):
     if value:
-        typer.echo(f"nbterm version: {__version__}")
+        typer.echo(f"nbterm {__version__}")
         raise typer.Exit()
 
 
 def main(
-    notebook_path: str = typer.Argument("", help="Path to the notebook"),
-    run: Optional[bool] = typer.Option(None, "--run", help="Run the Notebook"),
+    notebook_path: str = typer.Argument("", help="Path to the notebook."),
+    run: Optional[bool] = typer.Option(None, "--run", help="Run the notebook."),
     version: Optional[bool] = typer.Option(
-        None, "--version", callback=version_callback, help="Show version"
+        None, "--version", callback=version_callback, help="Show the version and exit."
     ),
 ):
     nb = Notebook(notebook_path)

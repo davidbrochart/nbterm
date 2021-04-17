@@ -1,6 +1,6 @@
 import json
 
-from .cell import Cell  # type: ignore
+from .cell import Cell
 
 
 class Format:
@@ -18,6 +18,7 @@ class Format:
     def save_nb(self, path: str = "") -> None:
         path = path or self.nb_path
         if path:
+            print(path)
             with open(path, "wt") as f:
                 json.dump(self.nb_json, f, indent=1)
                 f.write("\n")

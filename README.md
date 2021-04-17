@@ -9,19 +9,25 @@ Lets you view, edit and execute Jupyter Notebooks in the terminal.
 
 There are two modes: cell mode, and notebook mode.
 
-- `enter`: enter the cell mode, allowing to modify the content of the cell.
-- `esc`: exit the cell mode and enter the notebook mode.
+- `enter`: enter the edit mode, allowing to type into the cell.
+- `esc`: exit the edit mode and enter the command mode.
 
-When in notebook mode:
+In command mode:
 
-- `up` and `down` arrows: navigate through cells.
-- `ctrl-i`: insert a new cell before the current one.
-- `ctrl-j`: insert a new cell after the current one.
-- `ctrl-d`: delete the cell.
-- `ctrl-o`: set the cell type to Code.
-- `ctrl-n`: set the cell type to Markdown.
-- `ctrl-l`: clear the output of the cell.
-- `ctrl-e`: execute the cell and stay on it.
-- `ctrl-r`: execute the cell and move to the next one.
-- `ctrl-s`: save the notebook.
-- `ctrl-q`: exit the application.
+- `up`: select cell above.
+- `down`: select cell above.
+- `ctrl-up`: move cell up.
+- `ctrl-down`: move cell down.
+- `a`: insert cell above.
+- `b`: insert cell below.
+- `x`: cut the cell.
+- `c`: copy the cell.
+- `ctrl-v`: paste cell above.
+- `v`: paste cell below.
+- `o`: set as code cell.
+- `m`: set as Markdown cell.
+- `l`: clear cell outputs.
+- `ctrl-e`: run cell.
+- `ctrl-r`: run cell and select below.
+- `ctrl-s`: save.
+- `ctrl-q`: exit.
