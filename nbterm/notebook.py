@@ -1,10 +1,10 @@
 import os
 import itertools
 import asyncio
-from typing import List, Dict, Any, Optional, cast
+from typing import List, Dict, Any, Optional
 
 from prompt_toolkit import ANSI
-from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.key_binding import KeyBindings as PtKeyBindings
 from prompt_toolkit.layout import ScrollablePane
 from prompt_toolkit.layout.containers import HSplit, VSplit
 from prompt_toolkit.layout.layout import Layout
@@ -12,50 +12,62 @@ from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit import Application
 from rich.console import Console
 import kernel_driver  # type: ignore
+from kernel_driver import KernelDriver
 
 from .cell import (
     Cell,
     ONE_COL,
     rich_print,
     get_output_text_and_height,
-    empty_cell_json,
 )
 from .format import Format
-from .key_bindings import DefaultKeyBindings
+from .key_bindings import KeyBindings
 
 
-class Notebook(Format, DefaultKeyBindings):
+class Notebook(Format, KeyBindings):
 
     app: Optional[Application]
+    layout: Layout
     copied_cell: Optional[Cell]
+    console: Console
+    _run_notebook_nb_path: str
+    cells: List[Cell]
+    executing_cells: List[Cell]
+    json: Dict[str, Any]
+    kd: Optional[KernelDriver]
+    execution_count: int
+    current_cell_idx: int
+    idle: Optional[asyncio.Event]
 
     def __init__(self, nb_path: str):
         self.copied_cell = None
         self.console = Console()
         self.nb_path = nb_path
-        self.cells: List[Cell] = []
-        self.executing_cells: List[Cell] = []
-        self.nb_json: Dict[str, Any] = {}
+        self.executing_cells = []
         if os.path.exists(nb_path):
             self.read_nb()
         else:
             self.create_nb()
-        kernel_name = self.nb_json["metadata"]["kernelspec"]["name"]
+        kernel_name = self.json["metadata"]["kernelspec"]["name"]
         try:
-            self.kd = kernel_driver.KernelDriver(kernel_name=kernel_name, log=False)
+            self.kd = KernelDriver(kernel_name=kernel_name, log=False)
             kernel_driver.driver._output_hook_default = self.output_hook
         except RuntimeError:
             self.kd = None
         self.execution_count = 1
+        self.current_cell_idx = 0
         self.idle = None
-        self.current_cell = self.cells[0]
+
+    @property
+    def current_cell(self):
+        return self.cells[self.current_cell_idx]
 
     def run(self):
         self.app = None
         asyncio.run(self._run())
 
     def show(self):
-        self.key_bindings = KeyBindings()
+        self.key_bindings = PtKeyBindings()
         self.bind_keys()
         self.create_layout()
         self.edit_mode = False
@@ -64,6 +76,12 @@ class Notebook(Format, DefaultKeyBindings):
         )
         self.focus(0)
         asyncio.run(self._show())
+
+    def update_layout(self, idx: int):
+        self.create_layout()
+        assert self.app is not None
+        self.app.layout = self.layout
+        self.focus(idx)
 
     def create_layout(self):
         inout_cells = list(
@@ -84,7 +102,7 @@ class Notebook(Format, DefaultKeyBindings):
         if 0 <= idx < len(self.cells):
             if self.app:
                 self.app.layout.focus(self.cells[idx].input_window)
-            self.current_cell = self.cells[idx]
+            self.current_cell_idx = idx
 
     def exit_cell(self):
         self.edit_mode = False
@@ -98,43 +116,21 @@ class Notebook(Format, DefaultKeyBindings):
         if idx > 0:
             cell = self.cells.pop(idx)
             self.cells.insert(idx - 1, cell)
-            cell_json = self.nb_json["cells"].pop(idx)
-            self.nb_json["cells"].insert(idx - 1, cell_json)
-            self.cells[idx - 1].idx = idx - 1
-            self.cells[idx].idx = idx
-            self.create_layout()
-            self.app = cast(Application, self.app)
-            self.app.layout = self.layout
-            self.focus(idx - 1)
+            self.update_layout(idx - 1)
 
     def move_down(self, idx: int):
         if idx < len(self.cells) - 1:
             cell = self.cells.pop(idx)
             self.cells.insert(idx + 1, cell)
-            cell_json = self.nb_json["cells"].pop(idx)
-            self.nb_json["cells"].insert(idx + 1, cell_json)
-            self.cells[idx].idx = idx
-            self.cells[idx + 1].idx = idx + 1
-            self.create_layout()
-            self.app = cast(Application, self.app)
-            self.app.layout = self.layout
-            self.focus(idx + 1)
+            self.update_layout(idx + 1)
 
     def cut_cell(self, idx: int):
         self.copied_cell = self.cells.pop(idx)
-        del self.nb_json["cells"][idx]
         if not self.cells:
-            self.cells = [Cell(self, idx=0)]
-            self.nb_json["cells"] = [empty_cell_json()]
+            self.cells = [Cell(self)]
         elif idx == len(self.cells):
             idx -= 1
-        else:
-            for cell in self.cells[idx:]:
-                cell.idx = cell.idx - 1
-        self.create_layout()
-        self.app = cast(Application, self.app)
-        self.app.layout = self.layout
-        self.focus(idx)
+        self.update_layout(idx)
 
     def copy_cell(self, idx: int):
         self.copied_cell = self.cells[idx]
@@ -142,25 +138,12 @@ class Notebook(Format, DefaultKeyBindings):
     def paste_cell(self, idx: int):
         if self.copied_cell is not None:
             pasted_cell = self.copied_cell.copy()
-            pasted_cell.idx = idx
             self.cells.insert(idx, pasted_cell)
-            for cell in self.cells[idx + 1 :]:  # noqa
-                cell.idx = cell.idx + 1
-            self.create_layout()
-            self.app = cast(Application, self.app)
-            self.app.layout = self.layout
-            self.focus(idx)
-            self.nb_json["cells"].insert(idx, self.current_cell.json)
+            self.update_layout(idx)
 
     def insert_cell(self, idx: int):
-        self.cells.insert(idx, Cell(self, idx=idx))
-        for cell in self.cells[idx + 1 :]:  # noqa
-            cell.idx = cell.idx + 1
-        self.create_layout()
-        self.app = cast(Application, self.app)
-        self.app.layout = self.layout
-        self.focus(idx)
-        self.nb_json["cells"].insert(idx, self.current_cell.json)
+        self.cells.insert(idx, Cell(self))
+        self.update_layout(idx)
 
     def output_hook(self, msg: Dict[str, Any]):
         msg_type = msg["header"]["msg_type"]
@@ -213,9 +196,9 @@ class Notebook(Format, DefaultKeyBindings):
         while True:
             self.executing_cells = [self.current_cell]
             await self.current_cell.run()
-            if self.current_cell.idx == len(self.cells) - 1:
+            if self.current_cell_idx == len(self.cells) - 1:
                 break
-            self.focus(self.current_cell.idx + 1)
+            self.focus(self.current_cell_idx + 1)
         i = self.nb_path.rfind(".")
         self._run_notebook_path = self.nb_path[:i] + "_run" + self.nb_path[i:]
         self.save_nb(self._run_notebook_path)

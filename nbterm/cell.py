@@ -59,18 +59,21 @@ def empty_cell_json():
 class Cell:
 
     input: Union[Frame, HSplit]
+    output: Window
+    json: Dict[str, Any]
+    input_prefix: Window
+    output_prefix: Window
+    input_window: Window
+    input_buffer: Buffer
 
-    def __init__(
-        self, notebook, idx: int = 0, cell_json: Optional[Dict[str, Any]] = None
-    ):
+    def __init__(self, notebook, cell_json: Optional[Dict[str, Any]] = None):
         self.notebook = notebook
-        if cell_json is None:
-            cell_json = empty_cell_json()
+        self.json = cell_json or empty_cell_json()
         self.input_prefix = Window(width=10)
         self.output_prefix = Window(width=10, height=0)
-        input_text = "".join(cell_json["source"])
-        if cell_json["cell_type"] == "code":
-            execution_count = cell_json["execution_count"] or " "
+        input_text = "".join(self.json["source"])
+        if self.json["cell_type"] == "code":
+            execution_count = self.json["execution_count"] or " "
             text = rich_print(
                 f"\nIn [{execution_count}]:",
                 self.notebook.console,
@@ -78,7 +81,7 @@ class Cell:
                 end="",
             )
             self.input_prefix.content = FormattedTextControl(text=ANSI(text))
-            outputs = cell_json["outputs"]
+            outputs = self.json["outputs"]
             for output in outputs:
                 if "execution_count" in output:
                     text = rich_print(
@@ -91,11 +94,9 @@ class Cell:
                     break
         else:
             outputs = []
-        self.json = cell_json
         output_text, output_height = get_output_text_and_height(
             outputs, self.notebook.console
         )
-        self.idx = idx
         self.input_window = Window()
         self.input_buffer = Buffer(on_text_changed=self.input_text_changed)
         self.input_buffer.text = input_text
@@ -111,7 +112,7 @@ class Cell:
 
     def copy(self):
         cell_json = copy.deepcopy(self.json)
-        cell = Cell(self.notebook, idx=0, cell_json=cell_json)
+        cell = Cell(self.notebook, cell_json=cell_json)
         return cell
 
     def input_text_changed(self, _=None):
@@ -133,9 +134,7 @@ class Cell:
                 self.input = HSplit(
                     [ONE_ROW, VSplit([ONE_COL, self.input_window]), ONE_ROW]
                 )
-                self.notebook.create_layout()
-                self.notebook.app.layout = self.notebook.layout
-                self.notebook.focus(self.idx)
+                self.notebook.update_layout()
 
     def set_as_code(self):
         prev_cell_type = self.json["cell_type"]
@@ -148,9 +147,7 @@ class Cell:
             self.set_input_readonly()
             if prev_cell_type == "markdown":
                 self.input = Frame(self.input_window)
-                self.notebook.create_layout()
-                self.notebook.app.layout = self.notebook.layout
-                self.notebook.focus(self.idx)
+                self.notebook.update_layout()
 
     def set_input_readonly(self):
         if self.json["cell_type"] == "markdown":

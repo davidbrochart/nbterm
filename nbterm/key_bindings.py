@@ -3,7 +3,7 @@ import asyncio
 from prompt_toolkit.filters import Condition
 
 
-class DefaultKeyBindings:
+class KeyBindings:
 
     edit_mode: bool
 
@@ -32,19 +32,19 @@ class DefaultKeyBindings:
 
         @self.key_bindings.add("up", filter=command_mode)
         def up(event):
-            self.focus(self.current_cell.idx - 1)
+            self.focus(self.current_cell_idx - 1)
 
         @self.key_bindings.add("down", filter=command_mode)
         def down(event):
-            self.focus(self.current_cell.idx + 1)
+            self.focus(self.current_cell_idx + 1)
 
         @self.key_bindings.add("c-up", filter=command_mode)
         def c_up(event):
-            self.move_up(self.current_cell.idx)
+            self.move_up(self.current_cell_idx)
 
         @self.key_bindings.add("c-down", filter=command_mode)
         def c_down(event):
-            self.move_down(self.current_cell.idx)
+            self.move_down(self.current_cell_idx)
 
         @self.key_bindings.add("enter", filter=command_mode)
         def enter(event):
@@ -70,31 +70,31 @@ class DefaultKeyBindings:
         @self.key_bindings.add("c-r", filter=command_mode)
         async def c_r(event):
             self.executing_cells.append(self.current_cell)
-            if self.current_cell.idx == len(self.cells) - 1:
-                self.insert_cell(self.current_cell.idx + 1)
-            self.focus(self.current_cell.idx + 1)
+            if self.current_cell_idx == len(self.cells) - 1:
+                self.insert_cell(self.current_cell_idx + 1)
+            self.focus(self.current_cell_idx + 1)
             await self.executing_cells[-1].run()
 
         @self.key_bindings.add("x", filter=command_mode)
         def x(event):
-            self.cut_cell(self.current_cell.idx)
+            self.cut_cell(self.current_cell_idx)
 
         @self.key_bindings.add("c", filter=command_mode)
         def c(event):
-            self.copy_cell(self.current_cell.idx)
+            self.copy_cell(self.current_cell_idx)
 
         @self.key_bindings.add("c-v", filter=command_mode)
         def c_v(event):
-            self.paste_cell(self.current_cell.idx)
+            self.paste_cell(self.current_cell_idx)
 
         @self.key_bindings.add("v", filter=command_mode)
         def v(event):
-            self.paste_cell(self.current_cell.idx + 1)
+            self.paste_cell(self.current_cell_idx + 1)
 
         @self.key_bindings.add("a", filter=command_mode)
         def a(event):
-            self.insert_cell(self.current_cell.idx)
+            self.insert_cell(self.current_cell_idx)
 
         @self.key_bindings.add("b", filter=command_mode)
         def b(event):
-            self.insert_cell(self.current_cell.idx + 1)
+            self.insert_cell(self.current_cell_idx + 1)
