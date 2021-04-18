@@ -194,8 +194,11 @@ class Cell:
                 if self.notebook.idle is None:
                     self.notebook.idle = asyncio.Event()
                 else:
-                    await self.notebook.idle.wait()
-                self.notebook.idle.clear()
+                    while True:
+                        await self.notebook.idle.wait()
+                        if self.notebook.executing_cells[0] is self:
+                            break
+                    self.notebook.idle.clear()
                 await self.notebook.kd.execute(self.input_buffer.text)
                 text = rich_print(
                     f"\nIn [{self.notebook.execution_count}]:",
@@ -208,5 +211,7 @@ class Cell:
                 self.notebook.execution_count += 1
                 if self.notebook.app:
                     self.notebook.app.invalidate()
+                self.notebook.executing_cells.remove(self)
                 self.notebook.idle.set()
-        self.notebook.executing_cells.pop(0)
+        else:
+            self.notebook.executing_cells.remove(self)
