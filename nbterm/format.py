@@ -9,30 +9,23 @@ class Format:
 
     def read_nb(self) -> None:
         with open(self.nb_path) as f:
-            self.nb_json = json.load(f)
+            self.json = json.load(f)
         self.cells = [
-            Cell(self, idx=idx, cell_json=self.nb_json["cells"][idx])
-            for idx, cell in enumerate(self.nb_json["cells"])
+            Cell(self, cell_json=cell_json) for cell_json in self.json["cells"]
         ]
+        del self.json["cells"]
 
     def save_nb(self, path: str = "") -> None:
         path = path or self.nb_path
         if path:
+            nb_json = {"cells": [cell.json for cell in self.cells]}
+            nb_json.update(self.json)
             with open(path, "wt") as f:
-                json.dump(self.nb_json, f, indent=1)
+                json.dump(nb_json, f, indent=1)
                 f.write("\n")
 
     def create_nb(self) -> None:
-        self.nb_json = {
-            "cells": [
-                {
-                    "cell_type": "code",
-                    "execution_count": 0,
-                    "metadata": {},
-                    "source": [],
-                    "outputs": [],
-                }
-            ],
+        self.json = {
             "metadata": {
                 "kernelspec": {
                     "display_name": "Python 3",
@@ -49,4 +42,4 @@ class Format:
             "nbformat": 4,
             "nbformat_minor": 4,
         }
-        self.cells = [Cell(self, idx=0, cell_json=self.nb_json["cells"][0])]
+        self.cells = [Cell(self)]
