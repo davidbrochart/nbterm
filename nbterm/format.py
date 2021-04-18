@@ -15,7 +15,7 @@ class Format:
         ]
         del self.json["cells"]
 
-    def save_nb(self, path: str = "") -> None:
+    def save(self, path: str = "") -> None:
         path = path or self.nb_path
         if path:
             nb_json = {"cells": [cell.json for cell in self.cells]}

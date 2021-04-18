@@ -39,7 +39,8 @@ class Notebook(Format, KeyBindings):
     current_cell_idx: int
     idle: Optional[asyncio.Event]
 
-    def __init__(self, nb_path: str):
+    def __init__(self, nb_path: str, no_kernel: bool = False):
+        self.app = None
         self.copied_cell = None
         self.console = Console()
         self.nb_path = nb_path
@@ -49,11 +50,14 @@ class Notebook(Format, KeyBindings):
         else:
             self.create_nb()
         kernel_name = self.json["metadata"]["kernelspec"]["name"]
-        try:
-            self.kd = KernelDriver(kernel_name=kernel_name, log=False)
-            kernel_driver.driver._output_hook_default = self.output_hook
-        except RuntimeError:
+        if no_kernel:
             self.kd = None
+        else:
+            try:
+                self.kd = KernelDriver(kernel_name=kernel_name, log=False)
+                kernel_driver.driver._output_hook_default = self.output_hook
+            except RuntimeError:
+                self.kd = None
         self.execution_count = 1
         self.current_cell_idx = 0
         self.idle = None
@@ -62,25 +66,30 @@ class Notebook(Format, KeyBindings):
     def current_cell(self):
         return self.cells[self.current_cell_idx]
 
-    def run(self):
-        self.app = None
+    def run(self, save_path: str = ""):
         asyncio.run(self._run())
+        if not save_path:
+            i = self.nb_path.rfind(".")
+            self._run_notebook_path = self.nb_path[:i] + "_run" + self.nb_path[i:]
+        else:
+            self._run_notebook_path = save_path
+        self.save(self._run_notebook_path)
 
     def show(self):
         self.key_bindings = PtKeyBindings()
         self.bind_keys()
         self.create_layout()
         self.edit_mode = False
-        self.app: Application = Application(
+        self.app = Application(
             layout=self.layout, key_bindings=self.key_bindings, full_screen=True
         )
         self.focus(0)
         asyncio.run(self._show())
 
     def update_layout(self, idx: int):
-        self.create_layout()
-        assert self.app is not None
-        self.app.layout = self.layout
+        if self.app:
+            self.create_layout()
+            self.app.layout = self.layout
         self.focus(idx)
 
     def create_layout(self):
@@ -106,23 +115,45 @@ class Notebook(Format, KeyBindings):
 
     def exit_cell(self):
         self.edit_mode = False
+        self.current_cell.update_json()
         self.current_cell.set_input_readonly()
 
     def enter_cell(self):
         self.edit_mode = True
         self.current_cell.set_input_editable()
 
-    def move_up(self, idx: int):
+    def move_up(self):
+        idx = self.current_cell_idx
         if idx > 0:
             self.cells[idx - 1], self.cells[idx] = self.cells[idx], self.cells[idx - 1]
             self.update_layout(idx - 1)
 
-    def move_down(self, idx: int):
+    def move_down(self):
+        idx = self.current_cell_idx
         if idx < len(self.cells) - 1:
             self.cells[idx], self.cells[idx + 1] = self.cells[idx + 1], self.cells[idx]
             self.update_layout(idx + 1)
 
-    def cut_cell(self, idx: int):
+    def clear_output(self):
+        self.current_cell.clear_output()
+
+    def markdown_cell(self):
+        self.current_cell.set_as_markdown()
+
+    def code_cell(self):
+        self.current_cell.set_as_code()
+
+    async def run_cell(self, and_select_below: bool = False):
+        if self.kd:
+            self.executing_cells.append(self.current_cell)
+            if and_select_below:
+                if self.current_cell_idx == len(self.cells) - 1:
+                    self.insert_cell(self.current_cell_idx + 1)
+                self.focus(self.current_cell_idx + 1)
+            await self.executing_cells[-1].run()
+
+    def cut_cell(self):
+        idx = self.current_cell_idx
         self.copied_cell = self.cells.pop(idx)
         if not self.cells:
             self.cells = [Cell(self)]
@@ -130,16 +161,19 @@ class Notebook(Format, KeyBindings):
             idx -= 1
         self.update_layout(idx)
 
-    def copy_cell(self, idx: int):
+    def copy_cell(self):
+        idx = self.current_cell_idx
         self.copied_cell = self.cells[idx]
 
-    def paste_cell(self, idx: int):
+    def paste_cell(self, below=False):
+        idx = self.current_cell_idx + below
         if self.copied_cell is not None:
             pasted_cell = self.copied_cell.copy()
             self.cells.insert(idx, pasted_cell)
             self.update_layout(idx)
 
-    def insert_cell(self, idx: int):
+    def insert_cell(self, below=False):
+        idx = self.current_cell_idx + below
         self.cells.insert(idx, Cell(self))
         self.update_layout(idx)
 
@@ -197,11 +231,19 @@ class Notebook(Format, KeyBindings):
             if self.current_cell_idx == len(self.cells) - 1:
                 break
             self.focus(self.current_cell_idx + 1)
-        i = self.nb_path.rfind(".")
-        self._run_notebook_path = self.nb_path[:i] + "_run" + self.nb_path[i:]
-        self.save_nb(self._run_notebook_path)
 
     async def _show(self):
         if self.kd:
             asyncio.create_task(self.kd.start())
         await self.app.run_async()
+
+    async def exit(self):
+        if self.kd:
+            await self.kd.stop()
+        self.app.exit()
+
+    def go_up(self):
+        self.focus(self.current_cell_idx - 1)
+
+    def go_down(self):
+        self.focus(self.current_cell_idx + 1)
