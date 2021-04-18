@@ -114,14 +114,12 @@ class Notebook(Format, KeyBindings):
 
     def move_up(self, idx: int):
         if idx > 0:
-            cell = self.cells.pop(idx)
-            self.cells.insert(idx - 1, cell)
+            self.cells[idx - 1], self.cells[idx] = self.cells[idx], self.cells[idx - 1]
             self.update_layout(idx - 1)
 
     def move_down(self, idx: int):
         if idx < len(self.cells) - 1:
-            cell = self.cells.pop(idx)
-            self.cells.insert(idx + 1, cell)
+            self.cells[idx], self.cells[idx + 1] = self.cells[idx + 1], self.cells[idx]
             self.update_layout(idx + 1)
 
     def cut_cell(self, idx: int):

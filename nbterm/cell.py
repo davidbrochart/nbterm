@@ -134,7 +134,7 @@ class Cell:
                 self.input = HSplit(
                     [ONE_ROW, VSplit([ONE_COL, self.input_window]), ONE_ROW]
                 )
-                self.notebook.update_layout()
+                self.notebook.update_layout(self.notebook.current_cell_idx)
 
     def set_as_code(self):
         prev_cell_type = self.json["cell_type"]
@@ -147,7 +147,7 @@ class Cell:
             self.set_input_readonly()
             if prev_cell_type == "markdown":
                 self.input = Frame(self.input_window)
-                self.notebook.update_layout()
+                self.notebook.update_layout(self.notebook.current_cell_idx)
 
     def set_input_readonly(self):
         if self.json["cell_type"] == "markdown":
@@ -183,14 +183,21 @@ class Cell:
         self.json["source"] = src_list
 
     async def run(self):
-        self.clear_output()
+        if self.notebook.executing_cells[0] is not self:
+            self.clear_output()
         if self.json["cell_type"] == "code":
             code = self.input_buffer.text.strip()
             if code:
-                text = rich_print(
+                executing_text = rich_print(
                     "\nIn [*]:", self.notebook.console, style="green", end=""
                 )
-                self.input_prefix.content = FormattedTextControl(text=ANSI(text))
+                if self.notebook.executing_cells[0] is self:
+                    already_executing = True
+                else:
+                    already_executing = False
+                    self.input_prefix.content = FormattedTextControl(
+                        text=ANSI(executing_text)
+                    )
                 if self.notebook.idle is None:
                     self.notebook.idle = asyncio.Event()
                 else:
@@ -199,6 +206,11 @@ class Cell:
                         if self.notebook.executing_cells[0] is self:
                             break
                     self.notebook.idle.clear()
+                if already_executing:
+                    self.input_prefix.content = FormattedTextControl(
+                        text=ANSI(executing_text)
+                    )
+                    self.clear_output()
                 await self.notebook.kd.execute(self.input_buffer.text)
                 text = rich_print(
                     f"\nIn [{self.notebook.execution_count}]:",
@@ -213,5 +225,8 @@ class Cell:
                     self.notebook.app.invalidate()
                 self.notebook.executing_cells.remove(self)
                 self.notebook.idle.set()
+            else:
+                self.clear_output()
         else:
+            self.clear_output()
             self.notebook.executing_cells.remove(self)
