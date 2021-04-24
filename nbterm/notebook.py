@@ -9,6 +9,9 @@ from prompt_toolkit.layout import ScrollablePane
 from prompt_toolkit.layout.containers import HSplit, VSplit
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.controls import FormattedTextControl
+from prompt_toolkit.lexers import PygmentsLexer
+from pygments.lexers.python import PythonLexer  # type: ignore
+from pygments.lexers.c_cpp import CppLexer  # type: ignore
 from prompt_toolkit import Application
 from rich.console import Console
 import kernel_driver  # type: ignore
@@ -38,29 +41,45 @@ class Notebook(Format, KeyBindings):
     execution_count: int
     current_cell_idx: int
     idle: Optional[asyncio.Event]
+    lexer: Optional[PygmentsLexer] = PygmentsLexer(PythonLexer)
+    language: str
+    kernel_name: str
+    no_kernel: bool
 
     def __init__(self, nb_path: str, no_kernel: bool = False):
         self.app = None
         self.copied_cell = None
         self.console = Console()
         self.nb_path = nb_path
+        self.no_kernel = no_kernel
         self.executing_cells = []
         if os.path.exists(nb_path):
             self.read_nb()
         else:
             self.create_nb()
-        kernel_name = self.json["metadata"]["kernelspec"]["name"]
-        if no_kernel:
-            self.kd = None
-        else:
-            try:
-                self.kd = KernelDriver(kernel_name=kernel_name, log=False)
-                kernel_driver.driver._output_hook_default = self.output_hook
-            except RuntimeError:
-                self.kd = None
         self.execution_count = 1
         self.current_cell_idx = 0
         self.idle = None
+
+    def set_language(self):
+        self.kernel_name = self.json["metadata"]["kernelspec"]["name"]
+        if self.kernel_name.startswith("python"):
+            self.lexer = PygmentsLexer(PythonLexer)
+            self.language = "python"
+        elif self.kernel_name.startswith("xcpp"):
+            self.lexer = PygmentsLexer(CppLexer)
+            self.language = "cpp"
+        else:
+            self.lexer = None
+            self.language = ""
+        if self.no_kernel:
+            self.kd = None
+        else:
+            try:
+                self.kd = KernelDriver(kernel_name=self.kernel_name, log=False)
+                kernel_driver.driver._output_hook_default = self.output_hook
+            except RuntimeError:
+                self.kd = None
 
     @property
     def current_cell(self):

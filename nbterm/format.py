@@ -10,6 +10,7 @@ class Format:
     def read_nb(self) -> None:
         with open(self.nb_path) as f:
             self.json = json.load(f)
+        self.set_language()  # type: ignore
         self.cells = [
             Cell(self, cell_json=cell_json) for cell_json in self.json["cells"]
         ]
@@ -42,4 +43,5 @@ class Format:
             "nbformat": 4,
             "nbformat_minor": 4,
         }
+        self.set_language()  # type: ignore
         self.cells = [Cell(self)]

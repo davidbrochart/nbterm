@@ -7,13 +7,8 @@ from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.widgets import Frame
 from prompt_toolkit.layout.containers import Window, HSplit, VSplit
 from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
-from prompt_toolkit.lexers import PygmentsLexer
-from pygments.lexers.python import PythonLexer  # type: ignore
 from rich.syntax import Syntax
 from rich.markdown import Markdown
-
-# TODO: take language into account
-lexer: PygmentsLexer = PygmentsLexer(PythonLexer)
 
 
 ONE_COL: Window = Window(width=1)
@@ -155,7 +150,7 @@ class Cell:
             md = Markdown(text)
             text = rich_print(md, self.notebook.console)
         elif self.json["cell_type"] == "code":
-            code = Syntax(self.input_buffer.text, "python")
+            code = Syntax(self.input_buffer.text, self.notebook.language)
             text = rich_print(code, self.notebook.console)
         self.input_window.content = FormattedTextControl(text=ANSI(text))
         self.input_window.height = text.count("\n") or 1
@@ -163,7 +158,7 @@ class Cell:
     def set_input_editable(self):
         if self.json["cell_type"] == "code":
             self.input_window.content = BufferControl(
-                buffer=self.input_buffer, lexer=lexer
+                buffer=self.input_buffer, lexer=self.notebook.lexer
             )
         else:
             self.input_window.content = BufferControl(buffer=self.input_buffer)
