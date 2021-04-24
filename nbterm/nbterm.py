@@ -1,3 +1,4 @@
+import asyncio
 from typing import Optional
 
 import typer
@@ -19,17 +20,21 @@ def main(
     ),
     run: Optional[bool] = typer.Option(None, "--run", help="Run the notebook."),
     save_path: Optional[str] = typer.Option(
-        None, "--save-path", help="Path to save the run notebook."
+        None, "--save-path", help="Path to save the notebook."
     ),
     version: Optional[bool] = typer.Option(
         None, "--version", callback=version_callback, help="Show the version and exit."
     ),
 ):
-    nb = Notebook(notebook_path, no_kernel or False)
+    nb = Notebook(notebook_path, no_kernel=no_kernel or False, save_path=save_path)
     if run:
         assert no_kernel is not True
-        nb.run(save_path or "")
-        typer.echo(f"Executed notebook has been saved to: {nb.run_notebook_path}")
+        asyncio.run(nb.run_all())
+        if save_path is None:
+            i = nb.nb_path.rfind(".")
+            save_path = nb.nb_path[:i] + "_run" + nb.nb_path[i:]
+        nb.save(save_path)
+        typer.echo(f"Executed notebook has been saved to: {save_path}")
     else:
         nb.show()
 

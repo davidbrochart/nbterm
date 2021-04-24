@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 
 from .cell import Cell
 
@@ -16,8 +17,8 @@ class Format:
         ]
         del self.json["cells"]
 
-    def save(self, path: str = "") -> None:
-        path = path or self.nb_path
+    def save(self, path: Optional[str] = None) -> None:
+        path = path or self.save_path or self.nb_path  # type: ignore
         if path:
             nb_json = {"cells": [cell.json for cell in self.cells]}
             nb_json.update(self.json)

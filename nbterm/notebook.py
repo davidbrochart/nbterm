@@ -45,12 +45,16 @@ class Notebook(Format, KeyBindings):
     language: str
     kernel_name: str
     no_kernel: bool
+    save_path: Optional[str]
 
-    def __init__(self, nb_path: str, no_kernel: bool = False):
+    def __init__(
+        self, nb_path: str, no_kernel: bool = False, save_path: Optional[str] = None
+    ):
         self.app = None
         self.copied_cell = None
         self.console = Console()
         self.nb_path = nb_path
+        self.save_path = save_path
         self.no_kernel = no_kernel
         self.executing_cells = []
         if os.path.exists(nb_path):
@@ -85,14 +89,17 @@ class Notebook(Format, KeyBindings):
     def current_cell(self):
         return self.cells[self.current_cell_idx]
 
-    def run(self, save_path: str = ""):
-        asyncio.run(self._run())
-        if not save_path:
-            i = self.nb_path.rfind(".")
-            self._run_notebook_path = self.nb_path[:i] + "_run" + self.nb_path[i:]
-        else:
-            self._run_notebook_path = save_path
-        self.save(self._run_notebook_path)
+    async def run_cell(self, idx: Optional[int] = None):
+        if idx is None:
+            idx = self.current_cell_idx
+        self.focus(idx)
+        self.executing_cells = [self.current_cell]
+        await self.current_cell.run()
+
+    async def run_all(self):
+        await self.kd.start()
+        for i in range(len(self.cells)):
+            await self.run_cell(i)
 
     def show(self):
         self.key_bindings = PtKeyBindings()
@@ -162,7 +169,7 @@ class Notebook(Format, KeyBindings):
     def code_cell(self):
         self.current_cell.set_as_code()
 
-    async def run_cell(self, and_select_below: bool = False):
+    async def queue_run_cell(self, and_select_below: bool = False):
         if self.kd:
             self.executing_cells.append(self.current_cell)
             if and_select_below:
@@ -171,8 +178,9 @@ class Notebook(Format, KeyBindings):
                 self.focus(self.current_cell_idx + 1)
             await self.executing_cells[-1].run()
 
-    def cut_cell(self):
-        idx = self.current_cell_idx
+    def cut_cell(self, idx: Optional[int] = None):
+        if idx is None:
+            idx = self.current_cell_idx
         self.copied_cell = self.cells.pop(idx)
         if not self.cells:
             self.cells = [Cell(self)]
@@ -180,19 +188,23 @@ class Notebook(Format, KeyBindings):
             idx -= 1
         self.update_layout(idx)
 
-    def copy_cell(self):
+    def copy_cell(self, idx: Optional[int] = None):
+        if idx is None:
+            idx = self.current_cell_idx
         idx = self.current_cell_idx
         self.copied_cell = self.cells[idx]
 
-    def paste_cell(self, below=False):
-        idx = self.current_cell_idx + below
+    def paste_cell(self, idx: Optional[int] = None, below=False):
+        if idx is None:
+            idx = self.current_cell_idx + below
         if self.copied_cell is not None:
             pasted_cell = self.copied_cell.copy()
             self.cells.insert(idx, pasted_cell)
             self.update_layout(idx)
 
-    def insert_cell(self, below=False):
-        idx = self.current_cell_idx + below
+    def insert_cell(self, idx: Optional[int] = None, below=False):
+        if idx is None:
+            idx = self.current_cell_idx + below
         self.cells.insert(idx, Cell(self))
         self.update_layout(idx)
 
@@ -237,19 +249,6 @@ class Notebook(Format, KeyBindings):
         self.executing_cells[0].output.height = height
         if self.app:
             self.app.invalidate()
-
-    @property
-    def run_notebook_path(self):
-        return self._run_notebook_path
-
-    async def _run(self):
-        await self.kd.start()
-        while True:
-            self.executing_cells = [self.current_cell]
-            await self.current_cell.run()
-            if self.current_cell_idx == len(self.cells) - 1:
-                break
-            self.focus(self.current_cell_idx + 1)
 
     async def _show(self):
         if self.kd:

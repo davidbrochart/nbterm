@@ -60,11 +60,11 @@ class KeyBindings:
 
         @self.key_bindings.add("c-e", filter=command_mode)
         async def c_e(event):
-            await self.run_cell()
+            await self.queue_run_cell()
 
         @self.key_bindings.add("c-r", filter=command_mode)
         async def c_r(event):
-            await self.run_cell(and_select_below=True)
+            await self.queue_run_cell(and_select_below=True)
 
         @self.key_bindings.add("x", filter=command_mode)
         def x(event):
