@@ -124,7 +124,7 @@ class Notebook(Format, KeyBindings):
                 [
                     (
                         VSplit([cell.input_prefix, cell.input]),
-                        VSplit([cell.output_prefix, ONE_COL, cell.output]),
+                        VSplit([cell.output_prefix, ONE_COL, cell.output, ONE_COL]),
                     )
                     for cell in self.cells
                 ]

@@ -9,19 +9,20 @@ from prompt_toolkit.layout.containers import Window, HSplit, VSplit
 from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
 from rich.syntax import Syntax
 from rich.markdown import Markdown
+from rich.console import Console
 
 
 ONE_COL: Window = Window(width=1)
 ONE_ROW: Window = Window(height=1)
 
 
-def rich_print(string, console, style="", end="\n"):
+def rich_print(string: str, console: Console, style: str = "", end: str = "\n"):
     with console.capture() as capture:
         console.print(string, style=style, end=end)
     return capture.get()
 
 
-def get_output_text_and_height(outputs: List[Dict[str, Any]], console):
+def get_output_text_and_height(outputs: List[Dict[str, Any]], console: Console):
     text_list = []
     height = 0
     for output in outputs:
@@ -29,7 +30,10 @@ def get_output_text_and_height(outputs: List[Dict[str, Any]], console):
             text = "".join(output["text"])
             height += text.count("\n") or 1
             if output["name"] == "stderr":
-                text = rich_print(text, console, style="white on red", end="")
+                # TODO: take terminal width into account
+                lines = [line + " " * (200 - len(line)) for line in text.split()]
+                text = "\n".join(lines)
+                text = rich_print(text, console, style="white on red")
         elif output["output_type"] == "error":
             text = "\n".join(output["traceback"])
             height += text.count("\n") + 1
