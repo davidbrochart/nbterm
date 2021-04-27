@@ -40,6 +40,9 @@ def get_output_text_and_height(outputs: List[Dict[str, Any]], console: Console):
         elif output["output_type"] == "execute_result":
             text = "\n".join(output["data"].get("text/plain", ""))
             height += text.count("\n") or 1
+        else:
+            continue
+
         text_list.append(text)
     text_ansi = ANSI("".join(text_list))
     return text_ansi, height
