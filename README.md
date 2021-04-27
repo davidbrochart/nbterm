@@ -5,6 +5,36 @@
 
 Lets you view, edit and execute Jupyter Notebooks in the terminal.
 
+## Install
+
+Using pip:
+
+```
+pip install nbterm
+```
+
+Using conda:
+
+```
+mamba install nbterm -c conda-forge
+```
+
+You will also need a kernel, e.g. `ipykernel` or `xeus-python` for Python, `xeus-cling` for C++.
+
+## Usage
+
+Open an interactive notebook:
+
+```
+$ nbterm my_notebook.ipynb
+```
+
+Run a notebook in batch mode:
+
+```
+$ nbterm --run my_notebook.ipynb
+```
+
 ## Key bindings
 
 There are two modes: edit mode, and command mode.
