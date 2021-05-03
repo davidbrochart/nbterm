@@ -1,4 +1,5 @@
 import asyncio
+from pathlib import Path
 from typing import Optional
 
 import typer
@@ -14,12 +15,12 @@ def version_callback(value: bool):
 
 
 def main(
-    notebook_path: str = typer.Argument("", help="Path to the notebook."),
+    notebook_path: Path = typer.Argument(None, help="Path to the notebook."),
     no_kernel: Optional[bool] = typer.Option(
         None, "--no-kernel", help="Don't launch a kernel."
     ),
     run: Optional[bool] = typer.Option(None, "--run", help="Run the notebook."),
-    save_path: Optional[str] = typer.Option(
+    save_path: Optional[Path] = typer.Option(
         None, "--save-path", help="Path to save the notebook."
     ),
     version: Optional[bool] = typer.Option(
@@ -31,8 +32,7 @@ def main(
         assert no_kernel is not True
         asyncio.run(nb.run_all())
         if save_path is None:
-            i = nb.nb_path.rfind(".")
-            save_path = nb.nb_path[:i] + "_run" + nb.nb_path[i:]
+            save_path = nb.nb_path.with_name(f"{nb.nb_path.name}_run")
         nb.save(save_path)
         typer.echo(f"Executed notebook has been saved to: {save_path}")
     else:

@@ -1,15 +1,18 @@
 import json
+from pathlib import Path
 from typing import Optional
 
 from .cell import Cell
+from .types import PathLike
 
 
 class Format:
 
-    nb_path: str
+    nb_path: Path
+    save_path: Optional[Path]
 
     def read_nb(self) -> None:
-        with open(self.nb_path) as f:
+        with self.nb_path.open() as f:
             self.json = json.load(f)
         self.set_language()  # type: ignore
         self.cells = [
@@ -17,12 +20,12 @@ class Format:
         ]
         del self.json["cells"]
 
-    def save(self, path: Optional[str] = None) -> None:
-        path = path or self.save_path or self.nb_path  # type: ignore
+    def save(self, path: Optional[PathLike] = None) -> None:
+        path = (Path(path) if path else None) or self.save_path or self.nb_path
         if path:
             nb_json = {"cells": [cell.json for cell in self.cells]}
             nb_json.update(self.json)
-            with open(path, "wt") as f:
+            with path.open("wt") as f:
                 json.dump(nb_json, f, indent=1)
                 f.write("\n")
 

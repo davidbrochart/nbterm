@@ -1,6 +1,6 @@
-import os
 import itertools
 import asyncio
+from pathlib import Path
 from typing import List, Dict, Any, Optional
 
 from prompt_toolkit import ANSI
@@ -25,10 +25,10 @@ from .cell import (
 )
 from .format import Format
 from .key_bindings import KeyBindings
+from .types import PathLike
 
 
 class Notebook(Format, KeyBindings):
-
     app: Optional[Application]
     layout: Layout
     copied_cell: Optional[Cell]
@@ -45,19 +45,22 @@ class Notebook(Format, KeyBindings):
     language: str
     kernel_name: str
     no_kernel: bool
-    save_path: Optional[str]
+    save_path: Optional[Path]
 
     def __init__(
-        self, nb_path: str, no_kernel: bool = False, save_path: Optional[str] = None
+        self,
+        nb_path: PathLike,
+        no_kernel: bool = False,
+        save_path: Optional[PathLike] = None,
     ):
         self.app = None
         self.copied_cell = None
         self.console = Console()
-        self.nb_path = nb_path
-        self.save_path = save_path
+        self.nb_path = Path(nb_path)
+        self.save_path = Path(save_path) if save_path else None
         self.no_kernel = no_kernel
         self.executing_cells = []
-        if os.path.exists(nb_path):
+        if self.nb_path.exists():
             self.read_nb()
         else:
             self.create_nb()
