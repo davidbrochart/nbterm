@@ -15,7 +15,7 @@ def version_callback(value: bool):
 
 
 def main(
-    notebook_path: Path = typer.Argument(None, help="Path to the notebook."),
+    notebook_path: Path = typer.Argument(..., help="Path to the notebook."),
     no_kernel: Optional[bool] = typer.Option(
         None, "--no-kernel", help="Don't launch a kernel."
     ),
