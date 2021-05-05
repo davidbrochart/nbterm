@@ -8,10 +8,15 @@ from .types import PathLike
 
 class Format:
 
-    nb_path: Path
+    nb_path: Optional[Path]
     save_path: Optional[Path]
 
     def read_nb(self) -> None:
+        if self.nb_path is None:
+            raise FileNotFoundError(
+                "No nb_path was provided, cannot read existing notebook."
+            )
+
         with self.nb_path.open() as f:
             self.json = json.load(f)
         self.set_language()  # type: ignore

@@ -49,18 +49,18 @@ class Notebook(Format, KeyBindings):
 
     def __init__(
         self,
-        nb_path: PathLike,
+        nb_path: Optional[PathLike] = None,
         no_kernel: bool = False,
         save_path: Optional[PathLike] = None,
     ):
         self.app = None
         self.copied_cell = None
         self.console = Console()
-        self.nb_path = Path(nb_path)
+        self.nb_path = Path(nb_path) if nb_path else None
         self.save_path = Path(save_path) if save_path else None
         self.no_kernel = no_kernel
         self.executing_cells = []
-        if self.nb_path.exists():
+        if self.nb_path and self.nb_path.exists():
             self.read_nb()
         else:
             self.create_nb()

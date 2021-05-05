@@ -16,3 +16,7 @@ from nbterm.nbterm import default_save_path
 )
 def test_default_save_path(notebook_name: str, save_name: str, tmp_path: Path) -> None:
     assert default_save_path(tmp_path / notebook_name) == tmp_path / save_name
+
+
+def test_default_save_path_with_no_notebook_is_in_cwd() -> None:
+    assert Path.cwd() in default_save_path(None).parents

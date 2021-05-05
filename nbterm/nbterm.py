@@ -1,4 +1,5 @@
 import asyncio
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -15,7 +16,7 @@ def version_callback(value: bool):
 
 
 def main(
-    notebook_path: Path = typer.Argument(..., help="Path to the notebook."),
+    notebook_path: Optional[Path] = typer.Argument(None, help="Path to the notebook."),
     no_kernel: Optional[bool] = typer.Option(
         None, "--no-kernel", help="Don't launch a kernel."
     ),
@@ -38,9 +39,14 @@ def main(
         nb.show()
 
 
-def default_save_path(notebook_path: Path) -> Path:
-    # TODO: on Python >=3.9, can use https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.with_stem
-    return notebook_path.with_name(f"{notebook_path.stem}_run{notebook_path.suffix}")
+def default_save_path(notebook_path: Optional[Path]) -> Path:
+    if notebook_path:
+        # TODO: on Python >=3.9, can use https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.with_stem
+        return notebook_path.with_name(
+            f"{notebook_path.stem}_run{notebook_path.suffix}"
+        )
+    else:
+        return Path.cwd() / f"nbterm-{time.time()}.ipynb"
 
 
 def cli():
