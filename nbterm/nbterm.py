@@ -31,12 +31,16 @@ def main(
     if run:
         assert no_kernel is not True
         asyncio.run(nb.run_all())
-        if save_path is None:
-            save_path = nb.nb_path.with_name(f"{nb.nb_path.name}_run")
+        save_path = save_path or default_save_path(notebook_path)
         nb.save(save_path)
         typer.echo(f"Executed notebook has been saved to: {save_path}")
     else:
         nb.show()
+
+
+def default_save_path(notebook_path: Path) -> Path:
+    # TODO: on Python >=3.9, can use https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.with_stem
+    return notebook_path.with_name(f"{notebook_path.stem}_run{notebook_path.suffix}")
 
 
 def cli():
