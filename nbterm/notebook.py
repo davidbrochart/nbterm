@@ -21,14 +21,16 @@ from kernel_driver import KernelDriver
 from .cell import (
     Cell,
     ONE_COL,
+    set_console,
     rich_print,
     get_output_text_and_height,
 )
+from .help import Help
 from .format import Format
 from .key_bindings import KeyBindings
 
 
-class Notebook(Format, KeyBindings):
+class Notebook(Help, Format, KeyBindings):
 
     app: Optional[Application]
     layout: Layout
@@ -72,6 +74,7 @@ class Notebook(Format, KeyBindings):
         self.app = None
         self.copied_cell = None
         self.console = Console()
+        set_console(self.console)
         self.save_path = save_path
         self.no_kernel = no_kernel
         self.executing_cells = []
@@ -85,6 +88,8 @@ class Notebook(Format, KeyBindings):
         self.execution_count = 1
         self.current_cell_idx = 0
         self.idle = None
+        self.edit_mode = False
+        self.help_mode = False
 
     def set_language(self):
         self.kernel_name = self.json["metadata"]["kernelspec"]["name"]
@@ -126,17 +131,18 @@ class Notebook(Format, KeyBindings):
         self.key_bindings = PtKeyBindings()
         self.bind_keys()
         self.create_layout()
-        self.edit_mode = False
         self.app = Application(
             layout=self.layout, key_bindings=self.key_bindings, full_screen=True
         )
         self.focus(0)
         asyncio.run(self._show())
 
-    def update_layout(self, idx: int):
+    def update_layout(self, idx: Optional[int] = None):
         if self.app:
             self.create_layout()
             self.app.layout = self.layout
+        if idx is None:
+            idx = self.current_cell_idx
         self.focus(idx)
 
     def create_layout(self):
@@ -281,9 +287,7 @@ class Notebook(Format, KeyBindings):
                     "output_type": msg_type,
                 }
             )
-            text = rich_print(
-                f"Out[{self.execution_count}]:", self.console, style="red", end=""
-            )
+            text = rich_print(f"Out[{self.execution_count}]:", style="red", end="")
             self.executing_cells[0].output_prefix.content = FormattedTextControl(
                 text=ANSI(text)
             )
@@ -298,7 +302,7 @@ class Notebook(Format, KeyBindings):
             )
         else:
             return
-        text, height = get_output_text_and_height(outputs, self.console)
+        text, height = get_output_text_and_height(outputs)
         self.executing_cells[0].output.content = FormattedTextControl(text=text)
         self.executing_cells[0].output.height = height
         if self.app:

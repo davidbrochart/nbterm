@@ -14,15 +14,25 @@ from rich.console import Console
 
 ONE_COL: Window = Window(width=1)
 ONE_ROW: Window = Window(height=1)
+CONSOLE: Optional[Console] = None
 
 
-def rich_print(string: str, console: Console, style: str = "", end: str = "\n"):
+def set_console(console: Console):
+    global CONSOLE
+    CONSOLE = console
+
+
+def rich_print(
+    string: str, console: Optional[Console] = None, style: str = "", end: str = "\n"
+):
+    console = console or CONSOLE
+    assert console is not None
     with console.capture() as capture:
         console.print(string, style=style, end=end)
     return capture.get()
 
 
-def get_output_text_and_height(outputs: List[Dict[str, Any]], console: Console):
+def get_output_text_and_height(outputs: List[Dict[str, Any]]):
     text_list = []
     height = 0
     for output in outputs:
@@ -33,7 +43,7 @@ def get_output_text_and_height(outputs: List[Dict[str, Any]], console: Console):
                 # TODO: take terminal width into account
                 lines = [line + " " * (200 - len(line)) for line in text.split()]
                 text = "\n".join(lines)
-                text = rich_print(text, console, style="white on red")
+                text = rich_print(text, style="white on red")
         elif output["output_type"] == "error":
             text = "\n".join(output["traceback"])
             height += text.count("\n") + 1
@@ -78,7 +88,6 @@ class Cell:
             execution_count = self.json["execution_count"] or " "
             text = rich_print(
                 f"\nIn [{execution_count}]:",
-                self.notebook.console,
                 style="green",
                 end="",
             )
@@ -88,7 +97,6 @@ class Cell:
                 if "execution_count" in output:
                     text = rich_print(
                         f"Out[{output['execution_count']}]:",
-                        self.notebook.console,
                         style="red",
                         end="",
                     )
@@ -96,9 +104,7 @@ class Cell:
                     break
         else:
             outputs = []
-        output_text, output_height = get_output_text_and_height(
-            outputs, self.notebook.console
-        )
+        output_text, output_height = get_output_text_and_height(outputs)
         self.input_window = Window()
         self.input_buffer = Buffer(on_text_changed=self.input_text_changed)
         self.input_buffer.text = input_text
@@ -148,7 +154,7 @@ class Cell:
             self.json["cell_type"] = "code"
             self.json["outputs"] = []
             self.json["execution_count"] = None
-            text = rich_print("\nIn [ ]:", self.notebook.console, style="green", end="")
+            text = rich_print("\nIn [ ]:", style="green", end="")
             self.input_prefix.content = FormattedTextControl(text=ANSI(text))
             self.set_input_readonly()
             if prev_cell_type == "markdown":
@@ -159,10 +165,10 @@ class Cell:
         if self.json["cell_type"] == "markdown":
             text = self.input_buffer.text or "Type *Markdown*"
             md = Markdown(text)
-            text = rich_print(md, self.notebook.console)
+            text = rich_print(md)
         elif self.json["cell_type"] == "code":
             code = Syntax(self.input_buffer.text, self.notebook.language)
-            text = rich_print(code, self.notebook.console)
+            text = rich_print(code)
         self.input_window.content = FormattedTextControl(text=ANSI(text))
         self.input_window.height = text.count("\n") or 1
 
@@ -198,9 +204,7 @@ class Cell:
             if code:
                 self.notebook.dirty = True
                 self.notebook.kernel_busy = True
-                executing_text = rich_print(
-                    "\nIn [*]:", self.notebook.console, style="green", end=""
-                )
+                executing_text = rich_print("\nIn [*]:", style="green", end="")
                 if self.notebook.executing_cells[0] is self:
                     already_executing = True
                 else:
@@ -225,7 +229,6 @@ class Cell:
                 self.notebook.kernel_busy = False
                 text = rich_print(
                     f"\nIn [{self.notebook.execution_count}]:",
-                    self.notebook.console,
                     style="green",
                     end="",
                 )
