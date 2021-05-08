@@ -118,12 +118,15 @@ class Cell:
         return cell
 
     def input_text_changed(self, _=None):
+        self.notebook.dirty = True
+        self.notebook.quitting = False
         line_nb = self.input_buffer.text.count("\n")
         self.input_window.height = line_nb + 1
 
     def set_as_markdown(self):
         prev_cell_type = self.json["cell_type"]
         if prev_cell_type != "markdown":
+            self.notebook.dirty = True
             self.json["cell_type"] = "markdown"
             if "outputs" in self.json:
                 del self.json["outputs"]
@@ -141,6 +144,7 @@ class Cell:
     def set_as_code(self):
         prev_cell_type = self.json["cell_type"]
         if prev_cell_type != "code":
+            self.notebook.dirty = True
             self.json["cell_type"] = "code"
             self.json["outputs"] = []
             self.json["execution_count"] = None
@@ -172,12 +176,14 @@ class Cell:
         self.input_window.height = self.input_buffer.text.count("\n") + 1
 
     def clear_output(self):
-        self.output.content = FormattedTextControl(text="")
-        self.output.height = 0
-        self.output_prefix.content = FormattedTextControl(text="")
-        self.output_prefix.height = 0
-        if self.json["cell_type"] == "code":
-            self.json["outputs"] = []
+        if self.output.height > 0:
+            self.notebook.dirty = True
+            self.output.height = 0
+            self.output.content = FormattedTextControl(text="")
+            self.output_prefix.content = FormattedTextControl(text="")
+            self.output_prefix.height = 0
+            if self.json["cell_type"] == "code":
+                self.json["outputs"] = []
 
     def update_json(self):
         src_list = [line + "\n" for line in self.input_buffer.text.split("\n")]
@@ -190,6 +196,8 @@ class Cell:
         if self.json["cell_type"] == "code":
             code = self.input_buffer.text.strip()
             if code:
+                self.notebook.dirty = True
+                self.notebook.kernel_busy = True
                 executing_text = rich_print(
                     "\nIn [*]:", self.notebook.console, style="green", end=""
                 )
@@ -214,6 +222,7 @@ class Cell:
                     )
                     self.clear_output()
                 await self.notebook.kd.execute(self.input_buffer.text)
+                self.notebook.kernel_busy = False
                 text = rich_print(
                     f"\nIn [{self.notebook.execution_count}]:",
                     self.notebook.console,
