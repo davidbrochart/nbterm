@@ -173,9 +173,11 @@ class Notebook(Help, Format, KeyBindings):
 
         def get_bottom_bar_text():
             text = ""
-            if not self.no_kernel and self.kernel_name:
+            if self.kd and not self.no_kernel and self.kernel_name:
                 kernel_status = ["idle", "busy"][self.kernel_busy]
                 text += f"{self.kernel_name} ({kernel_status}) at "
+            else:
+                text += "[NO KERNEL] "
             text += self.kernel_cwd
             return text
 
