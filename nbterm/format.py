@@ -18,6 +18,7 @@ class Format:
         del self.json["cells"]
 
     def save(self, path: Optional[str] = None) -> None:
+        self.dirty = False
         path = path or self.save_path or self.nb_path  # type: ignore
         if path:
             nb_json = {"cells": [cell.json for cell in self.cells]}

@@ -10,6 +10,7 @@ from prompt_toolkit.layout.containers import HSplit, VSplit
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.lexers import PygmentsLexer
+from prompt_toolkit.widgets.toolbars import FormattedTextToolbar
 from pygments.lexers.python import PythonLexer  # type: ignore
 from pygments.lexers.c_cpp import CppLexer  # type: ignore
 from prompt_toolkit import Application
@@ -46,21 +47,41 @@ class Notebook(Format, KeyBindings):
     kernel_name: str
     no_kernel: bool
     save_path: Optional[str]
+    dirty: bool
+    quitting: bool
+    kernel_busy: bool
+    kernel_cwd: str
 
     def __init__(
         self, nb_path: str, no_kernel: bool = False, save_path: Optional[str] = None
     ):
+        if nb_path:
+            if os.path.isdir(nb_path):
+                self.kernel_cwd = os.path.abspath(nb_path)
+                self.nb_path = ""
+            else:
+                self.kernel_cwd = os.path.abspath(os.path.dirname(nb_path))
+                assert os.path.isdir(self.kernel_cwd)
+                self.nb_path = os.path.relpath(
+                    os.path.abspath(nb_path), self.kernel_cwd
+                )
+            os.chdir(self.kernel_cwd)
+        else:
+            self.kernel_cwd = os.getcwd()
+            self.nb_path = ""
         self.app = None
         self.copied_cell = None
         self.console = Console()
-        self.nb_path = nb_path
         self.save_path = save_path
         self.no_kernel = no_kernel
         self.executing_cells = []
-        if os.path.exists(nb_path):
+        if os.path.isfile(self.nb_path):
             self.read_nb()
         else:
             self.create_nb()
+        self.dirty = False
+        self.quitting = False
+        self.kernel_busy = False
         self.execution_count = 1
         self.current_cell_idx = 0
         self.idle = None
@@ -130,7 +151,35 @@ class Notebook(Format, KeyBindings):
                 ]
             )
         )
-        root_container = ScrollablePane(HSplit(inout_cells))
+        nb_window = ScrollablePane(HSplit(inout_cells))
+
+        def get_top_bar_text():
+            text = ""
+            if self.dirty:
+                text += "+ "
+            text += os.path.basename(self.nb_path)
+            if self.dirty and self.quitting:
+                text += (
+                    " (no write since last change, please exit again to confirm, "
+                    "or save your changes)"
+                )
+            return text
+
+        def get_bottom_bar_text():
+            text = ""
+            if not self.no_kernel and self.kernel_name:
+                kernel_status = ["idle", "busy"][self.kernel_busy]
+                text += f"{self.kernel_name} ({kernel_status}) at "
+            text += self.kernel_cwd
+            return text
+
+        self.top_bar = FormattedTextToolbar(
+            get_top_bar_text, style="#ffffff bg:#444444"
+        )
+        self.bottom_bar = FormattedTextToolbar(
+            get_bottom_bar_text, style="#ffffff bg:#444444"
+        )
+        root_container = HSplit([self.top_bar, nb_window, self.bottom_bar])
         self.layout = Layout(root_container)
 
     def focus(self, idx: int):
@@ -151,12 +200,14 @@ class Notebook(Format, KeyBindings):
     def move_up(self):
         idx = self.current_cell_idx
         if idx > 0:
+            self.dirty = True
             self.cells[idx - 1], self.cells[idx] = self.cells[idx], self.cells[idx - 1]
             self.update_layout(idx - 1)
 
     def move_down(self):
         idx = self.current_cell_idx
         if idx < len(self.cells) - 1:
+            self.dirty = True
             self.cells[idx], self.cells[idx + 1] = self.cells[idx + 1], self.cells[idx]
             self.update_layout(idx + 1)
 
@@ -179,6 +230,7 @@ class Notebook(Format, KeyBindings):
             await self.executing_cells[-1].run()
 
     def cut_cell(self, idx: Optional[int] = None):
+        self.dirty = True
         if idx is None:
             idx = self.current_cell_idx
         self.copied_cell = self.cells.pop(idx)
@@ -195,6 +247,7 @@ class Notebook(Format, KeyBindings):
         self.copied_cell = self.cells[idx]
 
     def paste_cell(self, idx: Optional[int] = None, below=False):
+        self.dirty = True
         if idx is None:
             idx = self.current_cell_idx + below
         if self.copied_cell is not None:
@@ -203,6 +256,7 @@ class Notebook(Format, KeyBindings):
             self.update_layout(idx)
 
     def insert_cell(self, idx: Optional[int] = None, below=False):
+        self.dirty = True
         if idx is None:
             idx = self.current_cell_idx + below
         self.cells.insert(idx, Cell(self))
@@ -256,6 +310,9 @@ class Notebook(Format, KeyBindings):
         await self.app.run_async()
 
     async def exit(self):
+        if self.dirty and not self.quitting:
+            self.quitting = True
+            return
         if self.kd:
             await self.kd.stop()
         self.app.exit()
