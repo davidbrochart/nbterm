@@ -61,3 +61,4 @@ In command mode:
 - `ctrl-r`: run cell and select below.
 - `ctrl-s`: save.
 - `ctrl-q`: exit.
+- `ctrl-h`: show help.
