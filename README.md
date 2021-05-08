@@ -45,9 +45,9 @@ There are two modes: edit mode, and command mode.
 In command mode:
 
 - `up`: select cell above.
-- `down`: select cell above.
-- `ctrl-up`: move cell up.
-- `ctrl-down`: move cell down.
+- `down`: select cell below.
+- `ctrl-up`: move cell above.
+- `ctrl-down`: move cell below.
 - `a`: insert cell above.
 - `b`: insert cell below.
 - `x`: cut the cell.
