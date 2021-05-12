@@ -169,7 +169,7 @@ class Notebook(Help, Format, KeyBindings):
             text = ""
             if self.dirty:
                 text += "+ "
-            text += self.nb_path.stem if self.nb_path else ""
+            text += self.nb_path.name if self.nb_path else ""
             if self.dirty and self.quitting:
                 text += (
                     " (no write since last change, please exit again to confirm, "
