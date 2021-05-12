@@ -86,19 +86,13 @@ class Cell:
         input_text = "".join(self.json["source"])
         if self.json["cell_type"] == "code":
             execution_count = self.json["execution_count"] or " "
-            text = rich_print(
-                f"\nIn [{execution_count}]:",
-                style="green",
-                end="",
-            )
+            text = rich_print(f"\nIn [{execution_count}]:", style="green", end="",)
             self.input_prefix.content = FormattedTextControl(text=ANSI(text))
             outputs = self.json["outputs"]
             for output in outputs:
                 if "execution_count" in output:
                     text = rich_print(
-                        f"Out[{output['execution_count']}]:",
-                        style="red",
-                        end="",
+                        f"Out[{output['execution_count']}]:", style="red", end="",
                     )
                     self.output_prefix.content = FormattedTextControl(text=ANSI(text))
                     break
@@ -228,9 +222,7 @@ class Cell:
                 await self.notebook.kd.execute(self.input_buffer.text)
                 self.notebook.kernel_busy = False
                 text = rich_print(
-                    f"\nIn [{self.notebook.execution_count}]:",
-                    style="green",
-                    end="",
+                    f"\nIn [{self.notebook.execution_count}]:", style="green", end="",
                 )
                 self.input_prefix.content = FormattedTextControl(text=ANSI(text))
                 self.json["execution_count"] = self.notebook.execution_count

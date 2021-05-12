@@ -2,6 +2,7 @@ import itertools
 import asyncio
 from pathlib import Path
 from typing import List, Dict, Any, Optional
+import os
 
 from prompt_toolkit import ANSI
 from prompt_toolkit.key_binding import KeyBindings as PtKeyBindings
@@ -60,32 +61,33 @@ class Notebook(Help, Format, KeyBindings):
         no_kernel: bool = False,
         save_path: Optional[PathLike] = None,
     ):
-        if nb_path:
-            if os.path.isdir(nb_path):
-                self.kernel_cwd = os.path.abspath(nb_path)
-                self.nb_path = ""
+        self.nb_path = Path(nb_path).resolve() if nb_path else None
+        self.save_path = Path(save_path).resolve() if save_path else None
+        self.no_kernel = no_kernel
+
+        if self.nb_path:
+            if self.nb_path.is_dir():
+                self.kernel_cwd = self.nb_path.resolve()
             else:
-                self.kernel_cwd = os.path.abspath(os.path.dirname(nb_path))
-                assert os.path.isdir(self.kernel_cwd)
-                self.nb_path = os.path.relpath(
-                    os.path.abspath(nb_path), self.kernel_cwd
-                )
+                self.kernel_cwd = self.nb_path.parent
+                assert self.kernel_cwd.is_dir()
+                self.nb_path = self.nb_path.resolve().relative_to(self.kernel_cwd)
+
             os.chdir(self.kernel_cwd)
         else:
-            self.kernel_cwd = os.getcwd()
-            self.nb_path = ""
-        self.app = None
-        self.copied_cell = None
+            self.kernel_cwd = Path.cwd()
+
         self.console = Console()
         set_console(self.console)
-        self.nb_path = Path(nb_path) if nb_path else None
-        self.save_path = Path(save_path) if save_path else None
-        self.no_kernel = no_kernel
-        self.executing_cells = []
+
         if self.nb_path and self.nb_path.exists():
             self.read_nb()
         else:
             self.create_nb()
+
+        self.app = None
+        self.copied_cell = None
+        self.executing_cells = []
         self.dirty = False
         self.quitting = False
         self.kernel_busy = False
@@ -167,7 +169,7 @@ class Notebook(Help, Format, KeyBindings):
             text = ""
             if self.dirty:
                 text += "+ "
-            text += os.path.basename(self.nb_path)
+            text += self.nb_path.stem if self.nb_path else ""
             if self.dirty and self.quitting:
                 text += (
                     " (no write since last change, please exit again to confirm, "
@@ -182,7 +184,7 @@ class Notebook(Help, Format, KeyBindings):
                 text += f"{self.kernel_name} ({kernel_status}) at "
             else:
                 text += "[NO KERNEL] "
-            text += self.kernel_cwd
+            text += str(self.kernel_cwd)
             return text
 
         self.top_bar = FormattedTextToolbar(

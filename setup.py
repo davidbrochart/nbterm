@@ -13,8 +13,8 @@ setup(
     author="David Brochart",
     author_email="david.brochart@gmail.com",
     description="A tool for viewing, editing and executing Jupyter Notebooks in the terminal",
-    long_description=open('README.md').read(),
-    long_description_content_type='text/markdown',
+    long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
     packages=["nbterm"],
     python_requires=">=3.7",
     install_requires=[
@@ -24,18 +24,8 @@ setup(
         "rich",
         "kernel_driver",
     ],
-    extras_require={
-        "test": [
-            "mypy",
-            "flake8",
-            "black",
-            "pytest",
-            "ipykernel",
-        ],
-    },
-    entry_points={
-        "console_scripts": ["nbterm = nbterm.nbterm:cli"],
-    },
+    extras_require={"test": ["mypy", "flake8", "black", "pytest", "ipykernel",],},
+    entry_points={"console_scripts": ["nbterm = nbterm.nbterm:cli"],},
     classifiers=(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
