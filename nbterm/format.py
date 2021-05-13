@@ -3,8 +3,6 @@ from pathlib import Path
 from typing import Optional
 
 from .cell import Cell
-from .types import PathLike
-
 
 class Format:
 
@@ -25,9 +23,9 @@ class Format:
         ]
         del self.json["cells"]
 
-    def save(self, path: Optional[PathLike] = None) -> None:
+    def save(self, path: Optional[Path] = None) -> None:
         self.dirty = False
-        path = (Path(path) if path else None) or self.save_path or self.nb_path
+        path = path or self.save_path or self.nb_path
         if path:
             nb_json = {"cells": [cell.json for cell in self.cells]}
             nb_json.update(self.json)

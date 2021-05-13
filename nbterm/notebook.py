@@ -29,7 +29,6 @@ from .cell import (
 from .help import Help
 from .format import Format
 from .key_bindings import KeyBindings
-from .types import PathLike
 
 
 class Notebook(Help, Format, KeyBindings):
@@ -53,13 +52,13 @@ class Notebook(Help, Format, KeyBindings):
     dirty: bool
     quitting: bool
     kernel_busy: bool
-    kernel_cwd: str
+    kernel_cwd: Path
 
     def __init__(
         self,
-        nb_path: Optional[PathLike] = None,
+        nb_path: Optional[Path] = None,
         no_kernel: bool = False,
-        save_path: Optional[PathLike] = None,
+        save_path: Optional[Path] = None,
     ):
         self.nb_path = Path(nb_path).resolve() if nb_path else None
         self.save_path = Path(save_path).resolve() if save_path else None
@@ -80,7 +79,7 @@ class Notebook(Help, Format, KeyBindings):
         self.console = Console()
         set_console(self.console)
 
-        if self.nb_path and self.nb_path.exists():
+        if self.nb_path and self.nb_path.is_file():
             self.read_nb()
         else:
             self.create_nb()
