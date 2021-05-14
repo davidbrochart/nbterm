@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from typing import Optional
 
 from .cell import Cell
@@ -6,7 +7,8 @@ from .cell import Cell
 
 class Format:
 
-    nb_path: str
+    nb_path: Path
+    save_path: Optional[Path]
 
     def read_nb(self) -> None:
         with open(self.nb_path) as f:
@@ -17,15 +19,14 @@ class Format:
         ]
         del self.json["cells"]
 
-    def save(self, path: Optional[str] = None) -> None:
+    def save(self, path: Optional[Path] = None) -> None:
         self.dirty = False
-        path = path or self.save_path or self.nb_path  # type: ignore
-        if path:
-            nb_json = {"cells": [cell.json for cell in self.cells]}
-            nb_json.update(self.json)
-            with open(path, "wt") as f:
-                json.dump(nb_json, f, indent=1)
-                f.write("\n")
+        path = path or self.save_path or self.nb_path
+        nb_json = {"cells": [cell.json for cell in self.cells]}
+        nb_json.update(self.json)
+        with open(path, "wt") as f:
+            json.dump(nb_json, f, indent=1)
+            f.write("\n")
 
     def create_nb(self) -> None:
         self.json = {

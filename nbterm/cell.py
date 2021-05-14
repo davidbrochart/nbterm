@@ -41,9 +41,7 @@ def get_output_text_and_height(outputs: List[Dict[str, Any]]):
             height += text.count("\n")
             if output["name"] == "stderr":
                 # TODO: take terminal width into account
-                lines = text.split("\n")
-                if not lines[-1]:
-                    lines = lines[:-1]
+                lines = text.splitlines()
                 lines = [line + " " * (200 - len(line)) for line in lines]
                 text = "\n".join(lines)
                 text = rich_print(text, style="white on red", end="\n")
@@ -213,7 +211,7 @@ class Cell:
                 self.notebook.focus(self.notebook.current_cell_idx, update_layout=True)
 
     def update_json(self):
-        src_list = [line + "\n" for line in self.input_buffer.text.split("\n")]
+        src_list = [line + "\n" for line in self.input_buffer.text.splitlines()]
         src_list[-1] = src_list[-1][:-1]
         self.json["source"] = src_list
 
