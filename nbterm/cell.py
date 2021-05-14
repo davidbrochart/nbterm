@@ -1,6 +1,6 @@
 import asyncio
 import copy
-from typing import Dict, List, Any, Optional, Union
+from typing import Dict, List, Any, Optional, Union, cast
 
 from prompt_toolkit import ANSI
 from prompt_toolkit.buffer import Buffer
@@ -23,7 +23,7 @@ def set_console(console: Console):
 
 
 def rich_print(
-    string: str, console: Optional[Console] = None, style: str = "", end: str = "\n"
+    string: str, console: Optional[Console] = None, style: str = "", end: str = ""
 ):
     console = console or CONSOLE
     assert console is not None
@@ -38,21 +38,23 @@ def get_output_text_and_height(outputs: List[Dict[str, Any]]):
     for output in outputs:
         if output["output_type"] == "stream":
             text = "".join(output["text"])
-            height += text.count("\n") or 1
+            height += text.count("\n")
             if output["name"] == "stderr":
                 # TODO: take terminal width into account
-                lines = [line + " " * (200 - len(line)) for line in text.split()]
+                lines = text.split("\n")
+                if not lines[-1]:
+                    lines = lines[:-1]
+                lines = [line + " " * (200 - len(line)) for line in lines]
                 text = "\n".join(lines)
-                text = rich_print(text, style="white on red")
+                text = rich_print(text, style="white on red", end="\n")
         elif output["output_type"] == "error":
             text = "\n".join(output["traceback"])
-            height += text.count("\n") + 1
+            height += text.count("\n")
         elif output["output_type"] == "execute_result":
             text = "\n".join(output["data"].get("text/plain", ""))
-            height += text.count("\n") or 1
+            height += text.count("\n")
         else:
             continue
-
         text_list.append(text)
     text_ansi = ANSI("".join(text_list))
     return text_ansi, height
@@ -89,7 +91,6 @@ class Cell:
             text = rich_print(
                 f"\nIn [{execution_count}]:",
                 style="green",
-                end="",
             )
             self.input_prefix.content = FormattedTextControl(text=ANSI(text))
             outputs = self.json["outputs"]
@@ -98,7 +99,6 @@ class Cell:
                     text = rich_print(
                         f"Out[{output['execution_count']}]:",
                         style="red",
-                        end="",
                     )
                     self.output_prefix.content = FormattedTextControl(text=ANSI(text))
                     break
@@ -118,6 +118,11 @@ class Cell:
         self.output = Window(content=FormattedTextControl(text=output_text))
         self.output.height = output_height
 
+    def get_height(self) -> int:
+        input_height = cast(int, self.input_window.height) + 2  # include frame
+        output_height = cast(int, self.output.height)
+        return input_height + output_height
+
     def copy(self):
         cell_json = copy.deepcopy(self.json)
         cell = Cell(self.notebook, cell_json=cell_json)
@@ -126,8 +131,12 @@ class Cell:
     def input_text_changed(self, _=None):
         self.notebook.dirty = True
         self.notebook.quitting = False
-        line_nb = self.input_buffer.text.count("\n")
-        self.input_window.height = line_nb + 1
+        line_nb = self.input_buffer.text.count("\n") + 1
+        height_keep = self.input_window.height
+        self.input_window.height = line_nb
+        if height_keep is not None and line_nb != height_keep:
+            # height has changed
+            self.notebook.focus(self.notebook.current_cell_idx, update_layout=True)
 
     def set_as_markdown(self):
         prev_cell_type = self.json["cell_type"]
@@ -145,7 +154,7 @@ class Cell:
                 self.input = HSplit(
                     [ONE_ROW, VSplit([ONE_COL, self.input_window]), ONE_ROW]
                 )
-                self.notebook.update_layout(self.notebook.current_cell_idx)
+                self.notebook.focus(self.notebook.current_cell_idx)
 
     def set_as_code(self):
         prev_cell_type = self.json["cell_type"]
@@ -154,23 +163,33 @@ class Cell:
             self.json["cell_type"] = "code"
             self.json["outputs"] = []
             self.json["execution_count"] = None
-            text = rich_print("\nIn [ ]:", style="green", end="")
+            text = rich_print("\nIn [ ]:", style="green")
             self.input_prefix.content = FormattedTextControl(text=ANSI(text))
             self.set_input_readonly()
             if prev_cell_type == "markdown":
                 self.input = Frame(self.input_window)
-                self.notebook.update_layout(self.notebook.current_cell_idx)
+                self.notebook.update_layout()
+                self.notebook.focus(self.notebook.current_cell_idx)
 
     def set_input_readonly(self):
         if self.json["cell_type"] == "markdown":
             text = self.input_buffer.text or "Type *Markdown*"
             md = Markdown(text)
-            text = rich_print(md)
+            text = rich_print(md)[:-1]  # remove trailing "\n"
         elif self.json["cell_type"] == "code":
             code = Syntax(self.input_buffer.text, self.notebook.language)
-            text = rich_print(code)
+            text = rich_print(code)[:-1]  # remove trailing "\n"
+        line_nb = text.count("\n") + 1
         self.input_window.content = FormattedTextControl(text=ANSI(text))
-        self.input_window.height = text.count("\n") or 1
+        height_keep = self.input_window.height
+        self.input_window.height = line_nb
+        if (
+            self.notebook.app is not None
+            and height_keep is not None
+            and line_nb != height_keep
+        ):
+            # height has changed
+            self.notebook.focus(self.notebook.current_cell_idx, update_layout=True)
 
     def set_input_editable(self):
         if self.json["cell_type"] == "code":
@@ -190,6 +209,8 @@ class Cell:
             self.output_prefix.height = 0
             if self.json["cell_type"] == "code":
                 self.json["outputs"] = []
+            if self.notebook.app:
+                self.notebook.focus(self.notebook.current_cell_idx, update_layout=True)
 
     def update_json(self):
         src_list = [line + "\n" for line in self.input_buffer.text.split("\n")]
@@ -204,7 +225,7 @@ class Cell:
             if code:
                 self.notebook.dirty = True
                 self.notebook.kernel_busy = True
-                executing_text = rich_print("\nIn [*]:", style="green", end="")
+                executing_text = rich_print("\nIn [*]:", style="green")
                 if self.notebook.executing_cells[0] is self:
                     already_executing = True
                 else:
@@ -219,6 +240,7 @@ class Cell:
                         await self.notebook.idle.wait()
                         if self.notebook.executing_cells[0] is self:
                             break
+                    self.notebook.kernel_busy = True
                     self.notebook.idle.clear()
                 if already_executing:
                     self.input_prefix.content = FormattedTextControl(
@@ -230,7 +252,6 @@ class Cell:
                 text = rich_print(
                     f"\nIn [{self.notebook.execution_count}]:",
                     style="green",
-                    end="",
                 )
                 self.input_prefix.content = FormattedTextControl(text=ANSI(text))
                 self.json["execution_count"] = self.notebook.execution_count
@@ -241,6 +262,7 @@ class Cell:
                 self.notebook.idle.set()
             else:
                 self.clear_output()
+                self.notebook.executing_cells.remove(self)
         else:
             self.clear_output()
             self.notebook.executing_cells.remove(self)

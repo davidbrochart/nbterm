@@ -1,7 +1,7 @@
 import os
 import itertools
 import asyncio
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Tuple, Any, Optional
 
 from prompt_toolkit import ANSI
 from prompt_toolkit.key_binding import KeyBindings as PtKeyBindings
@@ -43,6 +43,8 @@ class Notebook(Help, Format, KeyBindings):
     kd: Optional[KernelDriver]
     execution_count: int
     current_cell_idx: int
+    top_cell_idx: int
+    bottom_cell_idx: int
     idle: Optional[asyncio.Event]
     lexer: Optional[PygmentsLexer] = PygmentsLexer(PythonLexer)
     language: str
@@ -78,6 +80,9 @@ class Notebook(Help, Format, KeyBindings):
         self.save_path = save_path
         self.no_kernel = no_kernel
         self.executing_cells = []
+        self.top_cell_idx = 0
+        self.bottom_cell_idx = -1
+        self.current_cell_idx = 0
         if os.path.isfile(self.nb_path):
             self.read_nb()
         else:
@@ -86,7 +91,6 @@ class Notebook(Help, Format, KeyBindings):
         self.quitting = False
         self.kernel_busy = False
         self.execution_count = 1
-        self.current_cell_idx = 0
         self.idle = None
         self.edit_mode = False
         self.help_mode = False
@@ -137,13 +141,10 @@ class Notebook(Help, Format, KeyBindings):
         self.focus(0)
         asyncio.run(self._show())
 
-    def update_layout(self, idx: Optional[int] = None):
+    def update_layout(self):
         if self.app:
             self.create_layout()
             self.app.layout = self.layout
-        if idx is None:
-            idx = self.current_cell_idx
-        self.focus(idx)
 
     def create_layout(self):
         inout_cells = list(
@@ -153,11 +154,13 @@ class Notebook(Help, Format, KeyBindings):
                         VSplit([cell.input_prefix, cell.input]),
                         VSplit([cell.output_prefix, ONE_COL, cell.output, ONE_COL]),
                     )
-                    for cell in self.cells
+                    for cell in self.cells[
+                        self.top_cell_idx : self.bottom_cell_idx + 1  # noqa
+                    ]
                 ]
             )
         )
-        nb_window = ScrollablePane(HSplit(inout_cells))
+        nb_window = ScrollablePane(HSplit(inout_cells), show_scrollbar=False)
 
         def get_top_bar_text():
             text = ""
@@ -175,10 +178,11 @@ class Notebook(Help, Format, KeyBindings):
             text = ""
             if self.kd and not self.no_kernel and self.kernel_name:
                 kernel_status = ["idle", "busy"][self.kernel_busy]
-                text += f"{self.kernel_name} ({kernel_status}) at "
+                text += f"{self.kernel_name} ({kernel_status})"
             else:
-                text += "[NO KERNEL] "
-            text += self.kernel_cwd
+                text += "[NO KERNEL]"
+            text += " @ " + self.kernel_cwd
+            text += f" - {self.current_cell_idx + 1}/{len(self.cells)}"
             return text
 
         self.top_bar = FormattedTextToolbar(
@@ -190,11 +194,73 @@ class Notebook(Help, Format, KeyBindings):
         root_container = HSplit([self.top_bar, nb_window, self.bottom_bar])
         self.layout = Layout(root_container)
 
-    def focus(self, idx: int):
+    def focus(self, idx: int, update_layout: bool = False):
         if 0 <= idx < len(self.cells):
             if self.app:
+                if self.update_visible_cells(idx=idx) or update_layout:
+                    self.update_layout()
                 self.app.layout.focus(self.cells[idx].input_window)
             self.current_cell_idx = idx
+
+    def update_visible_cells(self, idx: int) -> bool:
+        if self.app is None:
+            return False
+        size = self.app.renderer.output.get_size()
+        available_height = size.rows - 2  # status bars
+        if idx < self.top_cell_idx or self.bottom_cell_idx == -1:
+            # scroll up
+            (
+                self.top_cell_idx,
+                self.bottom_cell_idx,
+            ) = self.get_visible_cell_idx_from_top(idx, available_height)
+            return True
+        if idx > self.bottom_cell_idx:
+            # scroll down
+            (
+                self.top_cell_idx,
+                self.bottom_cell_idx,
+            ) = self.get_visible_cell_idx_from_bottom(idx, available_height)
+            return True
+        top_cell_idx_keep, bottom_cell_idx_keep = (
+            self.top_cell_idx,
+            self.bottom_cell_idx,
+        )
+        while True:
+            (
+                self.top_cell_idx,
+                self.bottom_cell_idx,
+            ) = self.get_visible_cell_idx_from_top(self.top_cell_idx, available_height)
+            if self.top_cell_idx <= idx <= self.bottom_cell_idx:
+                break
+            self.top_cell_idx += 1
+        return not (
+            self.top_cell_idx == top_cell_idx_keep
+            and self.bottom_cell_idx == bottom_cell_idx_keep
+        )
+
+    def get_visible_cell_idx_from_top(
+        self, idx: int, available_height: int
+    ) -> Tuple[int, int]:
+        cell_nb = -1
+        for cell in self.cells[idx:]:
+            available_height -= cell.get_height()
+            cell_nb += 1
+            if available_height <= 0:
+                break
+        # bottom cell may be clipped by ScrollablePane
+        return idx, idx + cell_nb
+
+    def get_visible_cell_idx_from_bottom(
+        self, idx: int, available_height: int
+    ) -> Tuple[int, int]:
+        cell_nb = -1
+        for cell in self.cells[idx::-1]:
+            available_height -= cell.get_height()
+            cell_nb += 1
+            if available_height <= 0:
+                break
+        # top cell may be clipped by ScrollablePane
+        return idx - cell_nb, idx
 
     def exit_cell(self):
         self.edit_mode = False
@@ -210,14 +276,14 @@ class Notebook(Help, Format, KeyBindings):
         if idx > 0:
             self.dirty = True
             self.cells[idx - 1], self.cells[idx] = self.cells[idx], self.cells[idx - 1]
-            self.update_layout(idx - 1)
+            self.focus(idx - 1, update_layout=True)
 
     def move_down(self):
         idx = self.current_cell_idx
         if idx < len(self.cells) - 1:
             self.dirty = True
             self.cells[idx], self.cells[idx + 1] = self.cells[idx + 1], self.cells[idx]
-            self.update_layout(idx + 1)
+            self.focus(idx + 1, update_layout=True)
 
     def clear_output(self):
         self.current_cell.clear_output()
@@ -246,7 +312,7 @@ class Notebook(Help, Format, KeyBindings):
             self.cells = [Cell(self)]
         elif idx == len(self.cells):
             idx -= 1
-        self.update_layout(idx)
+        self.focus(idx, update_layout=True)
 
     def copy_cell(self, idx: Optional[int] = None):
         if idx is None:
@@ -255,20 +321,20 @@ class Notebook(Help, Format, KeyBindings):
         self.copied_cell = self.cells[idx]
 
     def paste_cell(self, idx: Optional[int] = None, below=False):
-        self.dirty = True
-        if idx is None:
-            idx = self.current_cell_idx + below
         if self.copied_cell is not None:
+            self.dirty = True
+            if idx is None:
+                idx = self.current_cell_idx + below
             pasted_cell = self.copied_cell.copy()
             self.cells.insert(idx, pasted_cell)
-            self.update_layout(idx)
+            self.focus(idx, update_layout=True)
 
     def insert_cell(self, idx: Optional[int] = None, below=False):
         self.dirty = True
         if idx is None:
             idx = self.current_cell_idx + below
         self.cells.insert(idx, Cell(self))
-        self.update_layout(idx)
+        self.focus(idx, update_layout=True)
 
     def output_hook(self, msg: Dict[str, Any]):
         msg_type = msg["header"]["msg_type"]
@@ -306,8 +372,11 @@ class Notebook(Help, Format, KeyBindings):
             return
         text, height = get_output_text_and_height(outputs)
         self.executing_cells[0].output.content = FormattedTextControl(text=text)
+        height_keep = self.executing_cells[0].output.height
         self.executing_cells[0].output.height = height
-        if self.app:
+        if self.app and height_keep != height:
+            # height has changed
+            self.focus(self.current_cell_idx, update_layout=True)
             self.app.invalidate()
 
     async def _show(self):
