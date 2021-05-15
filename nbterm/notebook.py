@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import itertools
 import asyncio
 from typing import List, Dict, Tuple, Any, Optional
@@ -50,29 +51,21 @@ class Notebook(Help, Format, KeyBindings):
     language: str
     kernel_name: str
     no_kernel: bool
-    save_path: Optional[str]
     dirty: bool
     quitting: bool
     kernel_busy: bool
-    kernel_cwd: str
+    kernel_cwd: Path
 
     def __init__(
-        self, nb_path: str, no_kernel: bool = False, save_path: Optional[str] = None
+        self,
+        nb_path: Path,
+        kernel_cwd: Path = Path("."),
+        no_kernel: bool = False,
+        save_path: Optional[Path] = None,
     ):
-        if nb_path:
-            if os.path.isdir(nb_path):
-                self.kernel_cwd = os.path.abspath(nb_path)
-                self.nb_path = ""
-            else:
-                self.kernel_cwd = os.path.abspath(os.path.dirname(nb_path))
-                assert os.path.isdir(self.kernel_cwd)
-                self.nb_path = os.path.relpath(
-                    os.path.abspath(nb_path), self.kernel_cwd
-                )
-            os.chdir(self.kernel_cwd)
-        else:
-            self.kernel_cwd = os.getcwd()
-            self.nb_path = ""
+        self.nb_path = nb_path.resolve()
+        self.kernel_cwd = kernel_cwd.resolve()
+        os.chdir(self.kernel_cwd)
         self.app = None
         self.copied_cell = None
         self.console = Console()
@@ -83,7 +76,7 @@ class Notebook(Help, Format, KeyBindings):
         self.top_cell_idx = 0
         self.bottom_cell_idx = -1
         self.current_cell_idx = 0
-        if os.path.isfile(self.nb_path):
+        if self.nb_path.is_file():
             self.read_nb()
         else:
             self.create_nb()
@@ -166,7 +159,7 @@ class Notebook(Help, Format, KeyBindings):
             text = ""
             if self.dirty:
                 text += "+ "
-            text += os.path.basename(self.nb_path)
+            text += str(self.nb_path.relative_to(self.kernel_cwd))
             if self.dirty and self.quitting:
                 text += (
                     " (no write since last change, please exit again to confirm, "
@@ -181,8 +174,9 @@ class Notebook(Help, Format, KeyBindings):
                 text += f"{self.kernel_name} ({kernel_status})"
             else:
                 text += "[NO KERNEL]"
-            text += " @ " + self.kernel_cwd
-            text += f" - {self.current_cell_idx + 1}/{len(self.cells)}"
+            text += (
+                f" @ {self.kernel_cwd} - {self.current_cell_idx + 1}/{len(self.cells)}"
+            )
             return text
 
         self.top_bar = FormattedTextToolbar(
