@@ -152,7 +152,7 @@ class Cell:
                 self.input = HSplit(
                     [ONE_ROW, VSplit([ONE_COL, self.input_window]), ONE_ROW]
                 )
-                self.notebook.focus(self.notebook.current_cell_idx)
+                self.notebook.focus(self.notebook.current_cell_idx, update_layout=True)
 
     def set_as_code(self):
         prev_cell_type = self.json["cell_type"]
@@ -166,8 +166,7 @@ class Cell:
             self.set_input_readonly()
             if prev_cell_type == "markdown":
                 self.input = Frame(self.input_window)
-                self.notebook.update_layout()
-                self.notebook.focus(self.notebook.current_cell_idx)
+                self.notebook.focus(self.notebook.current_cell_idx, update_layout=True)
 
     def set_input_readonly(self):
         if self.json["cell_type"] == "markdown":
