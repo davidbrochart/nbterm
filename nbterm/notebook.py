@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 import itertools
 import asyncio
-from typing import List, Dict, Tuple, Any, Optional
+from typing import List, Dict, Tuple, Any, Optional, cast
 
 from prompt_toolkit import ANSI
 from prompt_toolkit.key_binding import KeyBindings as PtKeyBindings
@@ -188,17 +188,28 @@ class Notebook(Help, Format, KeyBindings):
         root_container = HSplit([self.top_bar, nb_window, self.bottom_bar])
         self.layout = Layout(root_container)
 
-    def focus(self, idx: int, update_layout: bool = False):
+    def focus(self, idx: int, update_layout: bool = False, no_change: bool = False):
+        """
+        Focus on a cell.
+
+        Parameters
+        ----------
+        idx : int
+            Index of the cell to focus on.
+        update_layout : bool, optional
+            If True, force the update of the layout. Default is False.
+        no_change : bool optional
+            If True, the cells didn't change. Default is False.
+        """
         if 0 <= idx < len(self.cells):
             if self.app:
-                if self.update_visible_cells(idx=idx) or update_layout:
+                if self.update_visible_cells(idx, no_change) or update_layout:
                     self.update_layout()
                 self.app.layout.focus(self.cells[idx].input_window)
             self.current_cell_idx = idx
 
-    def update_visible_cells(self, idx: int) -> bool:
-        if self.app is None:
-            return False
+    def update_visible_cells(self, idx: int, no_change: bool) -> bool:
+        self.app = cast(Application, self.app)
         size = self.app.renderer.output.get_size()
         available_height = size.rows - 2  # status bars
         if idx < self.top_cell_idx or self.bottom_cell_idx == -1:
@@ -215,6 +226,9 @@ class Notebook(Help, Format, KeyBindings):
                 self.bottom_cell_idx,
             ) = self.get_visible_cell_idx_from_bottom(idx, available_height)
             return True
+        if no_change:
+            return False
+        # there might be less or more cells, or the cells' content may have changed
         top_cell_idx_keep, bottom_cell_idx_keep = (
             self.top_cell_idx,
             self.bottom_cell_idx,
@@ -387,7 +401,7 @@ class Notebook(Help, Format, KeyBindings):
         self.app.exit()
 
     def go_up(self):
-        self.focus(self.current_cell_idx - 1)
+        self.focus(self.current_cell_idx - 1, no_change=True)
 
     def go_down(self):
-        self.focus(self.current_cell_idx + 1)
+        self.focus(self.current_cell_idx + 1, no_change=True)
