@@ -39,21 +39,20 @@ class Notebook(Help, Format, KeyBindings):
     console: Console
     _run_notebook_nb_path: str
     cells: List[Cell]
-    executing_cells: List[Cell]
+    executing_cells: Dict[int, Cell]
     json: Dict[str, Any]
     kd: Optional[KernelDriver]
     execution_count: int
+    msg_id_2_execution_count: Dict[str, int]
     current_cell_idx: int
     top_cell_idx: int
     bottom_cell_idx: int
-    idle: Optional[asyncio.Event]
     lexer: Optional[PygmentsLexer] = PygmentsLexer(PythonLexer)
     language: str
     kernel_name: str
     no_kernel: bool
     dirty: bool
     quitting: bool
-    kernel_busy: bool
     kernel_cwd: Path
 
     def __init__(
@@ -72,7 +71,7 @@ class Notebook(Help, Format, KeyBindings):
         set_console(self.console)
         self.save_path = save_path
         self.no_kernel = no_kernel
-        self.executing_cells = []
+        self.executing_cells = {}
         self.top_cell_idx = 0
         self.bottom_cell_idx = -1
         self.current_cell_idx = 0
@@ -82,23 +81,20 @@ class Notebook(Help, Format, KeyBindings):
             self.create_nb()
         self.dirty = False
         self.quitting = False
-        self.kernel_busy = False
-        self.execution_count = 1
-        self.idle = None
+        self.execution_count = 0
+        self.msg_id_2_execution_count = {}
         self.edit_mode = False
         self.help_mode = False
 
     def set_language(self):
         self.kernel_name = self.json["metadata"]["kernelspec"]["name"]
-        if self.kernel_name.startswith("python"):
+        self.language = self.json["metadata"]["kernelspec"]["language"]
+        if self.language == "python":
             self.lexer = PygmentsLexer(PythonLexer)
-            self.language = "python"
-        elif self.kernel_name.startswith("xcpp"):
+        elif self.language == "cpp":
             self.lexer = PygmentsLexer(CppLexer)
-            self.language = "cpp"
         else:
             self.lexer = None
-            self.language = ""
         if self.no_kernel:
             self.kd = None
         else:
@@ -116,7 +112,6 @@ class Notebook(Help, Format, KeyBindings):
         if idx is None:
             idx = self.current_cell_idx
         self.focus(idx)
-        self.executing_cells = [self.current_cell]
         await self.current_cell.run()
 
     async def run_all(self):
@@ -170,7 +165,10 @@ class Notebook(Help, Format, KeyBindings):
         def get_bottom_bar_text():
             text = ""
             if self.kd and not self.no_kernel and self.kernel_name:
-                kernel_status = ["idle", "busy"][self.kernel_busy]
+                if self.executing_cells:
+                    kernel_status = "busy"
+                else:
+                    kernel_status = "idle"
                 text += f"{self.kernel_name} ({kernel_status})"
             else:
                 text += "[NO KERNEL]"
@@ -304,12 +302,12 @@ class Notebook(Help, Format, KeyBindings):
 
     async def queue_run_cell(self, and_select_below: bool = False):
         if self.kd:
-            self.executing_cells.append(self.current_cell)
+            cell = self.current_cell
             if and_select_below:
                 if self.current_cell_idx == len(self.cells) - 1:
                     self.insert_cell(self.current_cell_idx + 1)
                 self.focus(self.current_cell_idx + 1)
-            await self.executing_cells[-1].run()
+            await cell.run()
 
     def cut_cell(self, idx: Optional[int] = None):
         self.dirty = True
@@ -345,9 +343,11 @@ class Notebook(Help, Format, KeyBindings):
         self.focus(idx, update_layout=True)
 
     def output_hook(self, msg: Dict[str, Any]):
+        msg_id = msg["parent_header"]["msg_id"]
+        execution_count = self.msg_id_2_execution_count[msg_id]
         msg_type = msg["header"]["msg_type"]
         content = msg["content"]
-        outputs = self.executing_cells[0].json["outputs"]
+        outputs = self.executing_cells[execution_count].json["outputs"]
         if msg_type == "stream":
             if (not outputs) or (outputs[-1]["name"] != content["name"]):
                 outputs.append(
@@ -358,15 +358,15 @@ class Notebook(Help, Format, KeyBindings):
             outputs.append(
                 {
                     "data": {"text/plain": [content["data"].get("text/plain", "")]},
-                    "execution_count": self.execution_count,
+                    "execution_count": execution_count,
                     "metadata": {},
                     "output_type": msg_type,
                 }
             )
-            text = rich_print(f"Out[{self.execution_count}]:", style="red", end="")
-            self.executing_cells[0].output_prefix.content = FormattedTextControl(
-                text=ANSI(text)
-            )
+            text = rich_print(f"Out[{execution_count}]:", style="red", end="")
+            self.executing_cells[
+                execution_count
+            ].output_prefix.content = FormattedTextControl(text=ANSI(text))
         elif msg_type == "error":
             outputs.append(
                 {
@@ -379,9 +379,11 @@ class Notebook(Help, Format, KeyBindings):
         else:
             return
         text, height = get_output_text_and_height(outputs)
-        self.executing_cells[0].output.content = FormattedTextControl(text=text)
-        height_keep = self.executing_cells[0].output.height
-        self.executing_cells[0].output.height = height
+        self.executing_cells[execution_count].output.content = FormattedTextControl(
+            text=text
+        )
+        height_keep = self.executing_cells[execution_count].output.height
+        self.executing_cells[execution_count].output.height = height
         if self.app and height_keep != height:
             # height has changed
             self.focus(self.current_cell_idx, update_layout=True)

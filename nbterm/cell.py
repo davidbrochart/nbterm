@@ -1,5 +1,5 @@
-import asyncio
 import copy
+import uuid
 from typing import Dict, List, Any, Optional, Union, cast
 
 from prompt_toolkit import ANSI
@@ -215,51 +215,34 @@ class Cell:
         self.json["source"] = src_list
 
     async def run(self):
-        if self.notebook.executing_cells[0] is not self:
-            self.clear_output()
+        self.clear_output()
         if self.json["cell_type"] == "code":
             code = self.input_buffer.text.strip()
             if code:
-                self.notebook.dirty = True
-                self.notebook.kernel_busy = True
-                executing_text = rich_print("\nIn [*]:", style="green")
-                if self.notebook.executing_cells[0] is self:
-                    already_executing = True
-                else:
-                    already_executing = False
+                if self not in self.notebook.executing_cells.values():
+                    self.notebook.dirty = True
+                    executing_text = rich_print("\nIn [*]:", style="green")
                     self.input_prefix.content = FormattedTextControl(
                         text=ANSI(executing_text)
                     )
-                if self.notebook.idle is None:
-                    self.notebook.idle = asyncio.Event()
-                else:
-                    while True:
-                        await self.notebook.idle.wait()
-                        if self.notebook.executing_cells[0] is self:
-                            break
-                    self.notebook.kernel_busy = True
-                    self.notebook.idle.clear()
-                if already_executing:
-                    self.input_prefix.content = FormattedTextControl(
-                        text=ANSI(executing_text)
+                    self.notebook.execution_count += 1
+                    execution_count = self.notebook.execution_count
+                    msg_id = uuid.uuid4().hex
+                    self.notebook.msg_id_2_execution_count[msg_id] = execution_count
+                    self.notebook.executing_cells[execution_count] = self
+                    await self.notebook.kd.execute(
+                        self.input_buffer.text, msg_id=msg_id
                     )
-                    self.clear_output()
-                await self.notebook.kd.execute(self.input_buffer.text)
-                self.notebook.kernel_busy = False
-                text = rich_print(
-                    f"\nIn [{self.notebook.execution_count}]:",
-                    style="green",
-                )
-                self.input_prefix.content = FormattedTextControl(text=ANSI(text))
-                self.json["execution_count"] = self.notebook.execution_count
-                self.notebook.execution_count += 1
-                if self.notebook.app:
-                    self.notebook.app.invalidate()
-                self.notebook.executing_cells.remove(self)
-                self.notebook.idle.set()
+                    del self.notebook.executing_cells[execution_count]
+                    text = rich_print(
+                        f"\nIn [{execution_count}]:",
+                        style="green",
+                    )
+                    self.input_prefix.content = FormattedTextControl(text=ANSI(text))
+                    self.json["execution_count"] = execution_count
+                    if self.notebook.app:
+                        self.notebook.app.invalidate()
             else:
                 self.clear_output()
-                self.notebook.executing_cells.remove(self)
         else:
             self.clear_output()
-            self.notebook.executing_cells.remove(self)
