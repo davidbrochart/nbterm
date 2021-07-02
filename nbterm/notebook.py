@@ -59,6 +59,7 @@ class Notebook(Help, Format, KeyBindings):
         self,
         nb_path: Path,
         kernel_cwd: Path = Path("."),
+        kernel_name: str = "",
         no_kernel: bool = False,
         save_path: Optional[Path] = None,
     ):
@@ -78,7 +79,7 @@ class Notebook(Help, Format, KeyBindings):
         if self.nb_path.is_file():
             self.read_nb()
         else:
-            self.create_nb()
+            self.create_nb(kernel_name)
         self.dirty = False
         self.quitting = False
         self.execution_count = 0
@@ -90,6 +91,8 @@ class Notebook(Help, Format, KeyBindings):
         self.kernel_name = self.json["metadata"]["kernelspec"]["name"]
         self.language = self.json["metadata"]["kernelspec"]["language"]
         if self.language == "python":
+            self.lexer = PygmentsLexer(PythonLexer)
+        elif self.language == "javascript":
             self.lexer = PygmentsLexer(PythonLexer)
         elif self.language == "cpp":
             self.lexer = PygmentsLexer(CppLexer)
