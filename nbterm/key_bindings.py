@@ -103,6 +103,8 @@ class KeyBindings:
             await self.queue_run_cell()
 
         @self.key_bindings.add("c-r", filter=command_mode)
+        # CTRL + ENTER (works as shift enter either)
+        @self.key_bindings.add("c-m", filter=command_mode)
         async def c_r(event):
             self.quitting = False
             await self.queue_run_cell(and_select_below=True)
