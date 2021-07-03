@@ -52,7 +52,8 @@ class KeyBindings:
             self.quitting = False
             self.save()
 
-        @self.key_bindings.add("enter", filter=command_mode)
+        #@self.key_bindings.add("enter", filter=command_mode)
+        @self.key_bindings.add("e", filter=command_mode)
         def enter_cell(event):
             self.quitting = False
             self.enter_cell()
@@ -63,11 +64,13 @@ class KeyBindings:
             self.exit_cell()
 
         @self.key_bindings.add("up", filter=command_mode)
+        @self.key_bindings.add("k", filter=command_mode)
         def up(event):
             self.quitting = False
             self.go_up()
 
         @self.key_bindings.add("down", filter=command_mode)
+        @self.key_bindings.add("j", filter=command_mode)
         def down(event):
             self.quitting = False
             self.go_down()
