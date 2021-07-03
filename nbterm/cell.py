@@ -188,6 +188,9 @@ class Cell:
             # height has changed
             self.notebook.focus(self.notebook.current_cell_idx, update_layout=True)
 
+    def open_in_editor(self):
+        self.input_buffer.open_in_editor()
+
     def set_input_editable(self):
         if self.json["cell_type"] == "code":
             self.input_window.content = BufferControl(

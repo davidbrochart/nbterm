@@ -276,6 +276,10 @@ class Notebook(Help, Format, KeyBindings):
         self.current_cell.update_json()
         self.current_cell.set_input_readonly()
 
+    def edit_in_editor(self):
+        self.edit_mode = True
+        self.current_cell.open_in_editor()
+
     def enter_cell(self):
         self.edit_mode = True
         self.current_cell.set_input_editable()
