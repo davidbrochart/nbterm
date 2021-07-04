@@ -39,13 +39,21 @@ $ nbterm --run my_notebook.ipynb
 
 There are two modes: edit mode, and command mode.
 
-- `enter`: enter the edit mode, allowing to type into the cell.
+- `e`: enter the edit mode, allowing to type into the cell.
 - `esc`: exit the edit mode and enter the command mode.
 
+In edit mode:\n"
+- `ctrl-e`: run cell.
+- `ctrl-r`: run cell and select below in edit mode.
+- `ctrl-t`: open cell result in external editor.
+- `ctrl-w`: open cell in external editor.
+- `ctrl-f`: save tmp file from cell and execute it.
+- `ctrl-s`: save.
+ 
 In command mode:
 
-- `up`: select cell above.
-- `down`: select cell below.
+- `up` or k: select cell above.
+- `down` or j: select cell below.
 - `ctrl-up`: move cell above.
 - `ctrl-down`: move cell below.
 - `a`: insert cell above.
@@ -58,7 +66,7 @@ In command mode:
 - `m`: set as Markdown cell.
 - `l`: clear cell outputs.
 - `ctrl-e`: run cell.
-- `ctrl-r`: run cell and select below.
+- `ctrl-r` or `enter`: run cell and select below.
 - `ctrl-s`: save.
 - `ctrl-q`: exit.
 - `ctrl-h`: show help.
