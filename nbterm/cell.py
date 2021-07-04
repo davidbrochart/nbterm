@@ -77,6 +77,7 @@ class Cell:
     output_prefix: Window
     input_window: Window
     input_buffer: Buffer
+    output_buffer: Buffer
 
     def __init__(self, notebook, cell_json: Optional[Dict[str, Any]] = None):
         self.notebook = notebook
@@ -115,6 +116,7 @@ class Cell:
             self.input = Frame(self.input_window)
         self.output = Window(content=FormattedTextControl(text=output_text))
         self.output.height = output_height
+        self.output_buffer = Buffer()
 
     def get_height(self) -> int:
         input_height = cast(int, self.input_window.height) + 2  # include frame
@@ -190,6 +192,13 @@ class Cell:
 
     def open_in_editor(self):
         self.input_buffer.open_in_editor()
+
+    def open_result_in_editor(self):
+        output_ansi, output_height = get_output_text_and_height(self.json["outputs"])
+        output_text = output_ansi.value
+        self.output_buffer.text = output_text
+        self.output_buffer.open_in_editor()
+
 
     def set_input_editable(self):
         if self.json["cell_type"] == "code":

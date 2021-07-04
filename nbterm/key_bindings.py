@@ -23,15 +23,26 @@ class KeyBindings:
         def not_help_mode() -> bool:
             return not self.help_mode
 
+        @self.key_bindings.add("c-t", filter=edit_mode)
+        def ce_mode_i(event):
+          #self.cell_edit_mode = True
+          self.edit_result_in_editor()
+
         @self.key_bindings.add("c-w", filter=edit_mode)
         def ce_mode_i(event):
           self.edit_in_editor()
 
         @self.key_bindings.add("c-e", filter=edit_mode)
+        async def e_mod_c_e(event):
+            self.edit_mode = False
+            self.exit_cell()
+
+
+        @self.key_bindings.add("c-r", filter=edit_mode)
         async def e_mod_c_r(event):
             self.edit_mode = False
             self.exit_cell()
-            await self.queue_run_cell()
+            await self.queue_run_cell(and_select_below=True)
             self.quitting = False
             self.enter_cell()
 

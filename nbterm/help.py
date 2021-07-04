@@ -15,6 +15,8 @@ md = Markdown(
     "\n"
     "In command mode:\n"
     "- `ctrl-e`: run cell.\n"
+    "- `ctrl-r`: run cell and select below in edit mode.\n"
+    "- `ctrl-t`: open cell result in external editor.\n"
     "- `ctrl-w`: open cell in external editor.\n"
     "\n"
     "In command mode:\n"
