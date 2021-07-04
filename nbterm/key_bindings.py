@@ -27,7 +27,7 @@ class KeyBindings:
         def ce_mode_i(event):
           self.edit_in_editor()
 
-       @self.key_bindings.add("enter", filter=help_mode)
+        @self.key_bindings.add("enter", filter=help_mode)
         @self.key_bindings.add("c-q", filter=help_mode)
         @self.key_bindings.add("escape", filter=help_mode)
         def quit_help(event):
