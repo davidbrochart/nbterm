@@ -280,6 +280,12 @@ class Notebook(Help, Format, KeyBindings):
         self.edit_mode = True
         self.current_cell.open_in_editor()
 
+    def run_in_console(self):
+        self.edit_mode = True
+        self.current_cell.run_in_console()
+        idx = self.current_cell_idx
+        self.focus(idx, update_layout=True)
+
     def edit_result_in_editor(self):
         self.edit_mode = True
         self.current_cell.open_result_in_editor()

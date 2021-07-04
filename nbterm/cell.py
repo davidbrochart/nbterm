@@ -226,6 +226,39 @@ class Cell:
         src_list[-1] = src_list[-1][:-1]
         self.json["source"] = src_list
 
+    def call_external_process(self,fname):
+      import subprocess
+      subprocess.call(["python3", fname])
+      return(self.callback_external_process)
+      
+
+    def callback_external_process(self):
+      return(None)
+
+    def run_in_console(self):
+        self.clear_output()
+        if self.json["cell_type"] == "code":
+            code = self.input_buffer.text.strip()
+            if code:
+                if self not in self.notebook.executing_cells.values():
+                    self.notebook.dirty = True
+                    executing_text = code
+                    fname="tmp_nbt_"
+                    import random
+                    for i in range(1,16):
+                      fname+=chr(random.randint(97,122))
+                    fname+=".py"
+                    f = open(fname,"w")
+                    f.write(executing_text)
+                    f.close()
+                    from  prompt_toolkit.application.run_in_terminal import run_in_terminal
+                    success = run_in_terminal(
+                      self.call_external_process(fname),in_executor=True
+                    )
+                    import os
+                    os.remove(fname)
+
+ 
     async def run(self):
         self.clear_output()
         if self.json["cell_type"] == "code":

@@ -32,11 +32,20 @@ class KeyBindings:
         def ce_mode_i(event):
           self.edit_in_editor()
 
+        @self.key_bindings.add("c-f", filter=edit_mode)
+        def ce_mode_i(event):
+          self.run_in_console()
+          self.update_layout()
+
         @self.key_bindings.add("c-e", filter=edit_mode)
         async def e_mod_c_e(event):
             self.edit_mode = False
             self.exit_cell()
 
+        @self.key_bindings.add("c-s", filter=edit_mode)
+        def e_mod_c_s(event):
+            self.quitting = False
+            self.save()
 
         @self.key_bindings.add("c-r", filter=edit_mode)
         async def e_mod_c_r(event):
@@ -45,7 +54,6 @@ class KeyBindings:
             await self.queue_run_cell(and_select_below=True)
             self.quitting = False
             self.enter_cell()
-
 
         @self.key_bindings.add("enter", filter=help_mode)
         @self.key_bindings.add("c-q", filter=help_mode)
