@@ -42,7 +42,7 @@ There are two modes: edit mode, and command mode.
 - `e`: enter the edit mode, allowing to type into the cell.
 - `esc`: exit the edit mode and enter the command mode.
 
-In edit mode:\n"
+In edit mode:
 - `ctrl-e`: run cell.
 - `ctrl-r`: run cell and select below in edit mode.
 - `ctrl-t`: open cell result in external editor.
