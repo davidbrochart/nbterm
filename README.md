@@ -65,8 +65,9 @@ In command mode:
 - `o`: set as code cell.
 - `m`: set as Markdown cell.
 - `l`: clear cell outputs.
-- `ctrl-e`: run cell.
-- `ctrl-r` or `enter`: run cell and select below.
+- `ctrl-e` or 'enter': run cell.
+- `ctrl-r` or `alt-enter`: run cell and select below.
 - `ctrl-s`: save.
 - `ctrl-q`: exit.
 - `ctrl-h`: show help.
+
