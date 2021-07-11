@@ -1,10 +1,16 @@
 from prompt_toolkit.filters import Condition
+from prompt_toolkit.key_binding import KeyBindings
 
 
 class KeyBindings:
 
     edit_mode: bool
     help_mode: bool
+
+    # Handling of escape.
+    key_bindings = KeyBindings()
+    handle = key_bindings.add
+    handle("escape", eager=True)
 
     def bind_keys(self):
         @Condition
@@ -135,13 +141,14 @@ class KeyBindings:
             self.code_cell()
 
         @self.key_bindings.add("c-e", filter=command_mode)
+        @self.key_bindings.add("enter", filter=command_mode)
         async def c_e(event):
             self.quitting = False
             await self.queue_run_cell()
 
         @self.key_bindings.add("c-r", filter=command_mode)
-        # CTRL + ENTER (works as shift enter either)
-        @self.key_bindings.add("c-m", filter=command_mode)
+        # ALT + ENTER (works as shift enter either)
+        @self.key_bindings.add("escape","enter", filter=command_mode)
         async def c_r(event):
             self.quitting = False
             await self.queue_run_cell(and_select_below=True)
