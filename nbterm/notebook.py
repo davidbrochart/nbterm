@@ -415,10 +415,13 @@ class Notebook(Help, Format, KeyBindings):
 
     async def exit(self):
         if self.dirty and not self.quitting:
-            self.quitting = True
-            return
+          self.quitting = True
+          return
         if self.kd:
+          try:
             await self.kd.stop()
+          except:
+            print("Kernel stop error.")
         self.app.exit()
 
     def go_up(self):
