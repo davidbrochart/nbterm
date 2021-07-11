@@ -292,7 +292,7 @@ class Cell:
                           self.input_buffer.text, msg_id=msg_id
                       )
                     except Exception as e:
-                      print("EXCEPTION DURING EXECUTION")                      
+                      #print("EXCEPTION DURING EXECUTION")                      
                       self.notebook.kernel_status="Exception"
                       return 
                     del self.notebook.executing_cells[execution_count]
