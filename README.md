@@ -77,43 +77,54 @@ For more kernels visit:
 
 ![Jupyter kernels . jupyter/jupyter Wiki](https://github.com/jupyter/jupyter/wiki/Jupyter-kernels)
 
-This kernel is tested on (install only if You know what You're doing):
+This nbterm is tested on (install only if You know what You're doing):
 
 ### c kernel
 
+```
 pip install jupyter-c-kernel
 install_c_kernel
+```
 
 ### java kernel
 
+```
 wget https://github.com/SpencerPark/IJava/releases/download/v1.3.0/ijava-1.3.0.zip
 unzip ijava-1.3.0.zip -d ijava
 cd ijava
 python install.py
 apt-get isntall default-jdk
+```
 
 ### javascript kernel
 
+```
 apt-get install nodejs npm libczmq-dev
 npm install -g --unsafe-perm npm
 npm install -g --unsafe-perm ijavascript
 ijsinstall --install=global
+```
 
 ### php kernel
 
+```
 apt-get install php composer php-zmq
 wget https://litipk.github.io/Jupyter-PHP-Installer/dist/jupyter-php-installer.phar
 chmod u+x jupyter-php-installer.phar
 ./jupyter-php-installer.phar install
+```
 
 ### python3 kernel
 
+```
 out of the box
+```
 
 ## Testing environment
 
 using Python 3.9 and iPyKernel==6.0.0
 
+```
 pip install ipykernel==6.0.0
 
 jupyter --version:
@@ -122,3 +133,4 @@ ipython          : 7.25.0
 ipykernel        : 6.0.0
 jupyter client   : 6.1.12
 
+```
