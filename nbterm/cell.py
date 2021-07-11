@@ -176,7 +176,7 @@ class Cell:
             md = Markdown(text)
             text = rich_print(md)[:-1]  # remove trailing "\n"
         elif self.json["cell_type"] == "code":
-            code = Syntax(self.input_buffer.text, self.notebook.language)
+            code = Syntax(self.input_buffer.text, self.notebook.language,theme="ansi_dark")
             text = rich_print(code)[:-1]  # remove trailing "\n"
         line_nb = text.count("\n") + 1
         self.input_window.content = FormattedTextControl(text=ANSI(text))
@@ -223,12 +223,21 @@ class Cell:
 
     def update_json(self):
         src_list = [line + "\n" for line in self.input_buffer.text.splitlines()]
-        src_list[-1] = src_list[-1][:-1]
-        self.json["source"] = src_list
+        # Fixes exit from cell when nothing is typed neither no output with single cell
+        if src_list:
+          src_list[-1] = src_list[-1][:-1]
+          self.json["source"] = src_list
 
     def call_external_process(self,fname):
       import subprocess
-      subprocess.call(["python3", fname])
+      try:
+        subprocess.call(["python3", fname])
+      except subprocess.CalledProcessError as e:
+        self.output.content = e.output
+        pass
+      self.notebook.execution_count += 1
+      self.output.content = FormattedTextControl(text="ERROR")
+ 
       return(self.callback_external_process)
       
 
@@ -275,9 +284,17 @@ class Cell:
                     msg_id = uuid.uuid4().hex
                     self.notebook.msg_id_2_execution_count[msg_id] = execution_count
                     self.notebook.executing_cells[execution_count] = self
-                    await self.notebook.kd.execute(
-                        self.input_buffer.text, msg_id=msg_id
-                    )
+                    # LOG EXECUTION STATUS
+                    self.notebook.kd.log=False
+                    # this is added to eliminate hangs during execution
+                    try:
+                      await self.notebook.kd.execute(
+                          self.input_buffer.text, msg_id=msg_id
+                      )
+                    except Exception as e:
+                      print("EXCEPTION DURING EXECUTION")                      
+                      self.notebook.kernel_status="Exception"
+                      return 
                     del self.notebook.executing_cells[execution_count]
                     text = rich_print(
                         f"\nIn [{execution_count}]:",

@@ -54,6 +54,7 @@ class Notebook(Help, Format, KeyBindings):
     dirty: bool
     quitting: bool
     kernel_cwd: Path
+    kernel_status: "init"
 
     def __init__(
         self,
@@ -169,14 +170,15 @@ class Notebook(Help, Format, KeyBindings):
             text = ""
             if self.kd and not self.no_kernel and self.kernel_name:
                 if self.executing_cells:
-                    kernel_status = "busy"
+                    self.kernel_status = "busy"
                 else:
-                    kernel_status = "idle"
-                text += f"{self.kernel_name} ({kernel_status})"
+                    self.kernel_status = "idle"
+                text += f"{self.kernel_name} ({self.kernel_status})"
             else:
                 text += "[NO KERNEL]"
             text += (
-                f" @ {self.kernel_cwd} - {self.current_cell_idx + 1}/{len(self.cells)}"
+                #f" @ {self.kernel_cwd} - {self.current_cell_idx + 1}/{len(self.cells)}"
+                f" @ {self.current_cell_idx + 1}/{len(self.cells)}"
             )
             return text
 

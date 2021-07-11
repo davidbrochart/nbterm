@@ -31,9 +31,10 @@ class KeyBindings:
         @self.key_bindings.add("c-w", filter=edit_mode)
         def ce_mode_i(event):
           self.edit_in_editor()
+          self.save()
 
         @self.key_bindings.add("c-f", filter=edit_mode)
-        def ce_mode_i(event):
+        def ce_mode_f(event):
           self.run_in_console()
           self.update_layout()
 
@@ -76,6 +77,7 @@ class KeyBindings:
             self.show_help()
 
         @self.key_bindings.add("c-q", filter=not_help_mode)
+        @self.key_bindings.add("c-x", filter=not_help_mode)
         async def c_q(event):
             await self.exit()
 

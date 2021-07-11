@@ -16,8 +16,8 @@ def list_kernels_callback(value: bool):
         kernels=""
         for kernel in kernelSpecs:
           #print(kernel)
-          kernels+="|"+kernel+"|"+kernelSpecs[kernel]+"\n"
-        typer.echo(kernels)
+          kernels+=kernel+"|"+kernelSpecs[kernel]+"\n"
+        typer.echo(kernels[:-1])
         raise typer.Exit()
 
 
