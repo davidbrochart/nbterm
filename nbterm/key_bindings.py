@@ -1,6 +1,7 @@
 from prompt_toolkit.filters import Condition
 from prompt_toolkit.key_binding import KeyBindings
 
+
 class KeyBindings:
 
     edit_mode: bool
@@ -30,18 +31,18 @@ class KeyBindings:
 
         @self.key_bindings.add("c-t", filter=edit_mode)
         def ce_mode_i(event):
-          #self.cell_edit_mode = True
-          self.edit_result_in_editor()
+            # self.cell_edit_mode = True
+            self.edit_result_in_editor()
 
         @self.key_bindings.add("c-w", filter=edit_mode)
         def ce_mode_i(event):
-          self.edit_in_editor()
-          self.save()
+            self.edit_in_editor()
+            self.save()
 
         @self.key_bindings.add("c-f", filter=edit_mode)
         def ce_mode_f(event):
-          self.run_in_console()
-          self.update_layout()
+            self.run_in_console()
+            self.update_layout()
 
         @self.key_bindings.add("c-e", filter=edit_mode)
         async def e_mod_c_e(event):
@@ -91,7 +92,7 @@ class KeyBindings:
             self.quitting = False
             self.save()
 
-        #@self.key_bindings.add("enter", filter=command_mode)
+        # @self.key_bindings.add("enter", filter=command_mode)
         @self.key_bindings.add("e", filter=command_mode)
         def enter_cell(event):
             self.quitting = False
@@ -147,7 +148,7 @@ class KeyBindings:
 
         @self.key_bindings.add("c-r", filter=command_mode)
         # ALT + ENTER (works as shift enter either)
-        @self.key_bindings.add("escape","enter", filter=command_mode)
+        @self.key_bindings.add("escape", "enter", filter=command_mode)
         async def c_r(event):
             self.quitting = False
             await self.queue_run_cell(and_select_below=True)
@@ -189,5 +190,3 @@ class KeyBindings:
         @self.key_bindings.add("c-g", filter=command_mode)
         def G(event):
             self.goto_last_cell()
-
-

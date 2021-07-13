@@ -119,17 +119,17 @@ class Notebook(Help, Format, KeyBindings):
         await self.current_cell.run()
 
     def goto_last_cell(self):
-        self.focus(len(self.cells)-1)
+        self.focus(len(self.cells) - 1)
 
     async def run_all(self):
         if not self.kd:
-          try:
-            await self.kd.start()
-          except:
-            self.kernel_status = "error"
-            pass
-        for i in range(0,len(self.cells)):
-          await self.run_cell(i)
+            try:
+                await self.kd.start()
+            except:
+                self.kernel_status = "error"
+                pass
+        for i in range(0, len(self.cells)):
+            await self.run_cell(i)
         self.focus(0)
 
     def show(self):
@@ -186,7 +186,7 @@ class Notebook(Help, Format, KeyBindings):
             else:
                 text += "[NO KERNEL]"
             text += (
-                #f" @ {self.kernel_cwd} - {self.current_cell_idx + 1}/{len(self.cells)}"
+                # f" @ {self.kernel_cwd} - {self.current_cell_idx + 1}/{len(self.cells)}"
                 f" @ {self.current_cell_idx + 1}/{len(self.cells)}"
             )
             return text
@@ -425,13 +425,13 @@ class Notebook(Help, Format, KeyBindings):
     async def exit(self):
         # Causes whole term to hang. Better autosave than hang
         if self.dirty and not self.quitting:
-          self.quitting = True
-          return
+            self.quitting = True
+            return
         try:
-          if self.kd:
-            await self.kd.stop()
+            if self.kd:
+                await self.kd.stop()
         except:
-          print("Kernel stop error.")
+            print("Kernel stop error.")
         self.app.exit()
 
     def go_up(self):

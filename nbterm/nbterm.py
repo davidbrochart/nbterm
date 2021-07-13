@@ -12,11 +12,12 @@ from .notebook import Notebook
 def list_kernels_callback(value: bool):
     if value:
         from jupyter_client.kernelspec import KernelSpecManager
+
         kernelSpecs = KernelSpecManager().find_kernel_specs()
-        kernels=""
+        kernels = ""
         for kernel in kernelSpecs:
-          #print(kernel)
-          kernels+=kernel+"|"+kernelSpecs[kernel]+"\n"
+            # print(kernel)
+            kernels += kernel + "|" + kernelSpecs[kernel] + "\n"
         typer.echo(kernels[:-1])
         raise typer.Exit()
 
@@ -55,11 +56,16 @@ def main(
         None, "--version", callback=version_callback, help="Show the version and exit."
     ),
     list_kernels: Optional[bool] = typer.Option(
-        None, "--list-kernels", callback=list_kernels_callback, help="Show the available kernels."
+        None,
+        "--list-kernels",
+        callback=list_kernels_callback,
+        help="Show the available kernels.",
     ),
     kernel: Optional[str] = typer.Option(
-        #None, "--kernel", callback=kernels_callback, help="Show the available kernels."
-        None, "--kernel", help="Select given kernel."
+        # None, "--kernel", callback=kernels_callback, help="Show the available kernels."
+        None,
+        "--kernel",
+        help="Select given kernel.",
     ),
     test: Optional[str] = typer.Option(None, "--test", help="N/A (for testing)."),
 ):

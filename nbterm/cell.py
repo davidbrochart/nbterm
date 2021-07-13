@@ -175,7 +175,9 @@ class Cell:
             md = Markdown(text)
             text = rich_print(md)[:-1]  # remove trailing "\n"
         elif self.json["cell_type"] == "code":
-            code = Syntax(self.input_buffer.text, self.notebook.language,theme="ansi_dark")
+            code = Syntax(
+                self.input_buffer.text, self.notebook.language, theme="ansi_dark"
+            )
             text = rich_print(code)[:-1]  # remove trailing "\n"
         line_nb = text.count("\n") + 1
         self.input_window.content = FormattedTextControl(text=ANSI(text))
@@ -197,7 +199,6 @@ class Cell:
         output_text = output_ansi.value
         self.output_buffer.text = output_text
         self.output_buffer.open_in_editor()
-
 
     def set_input_editable(self):
         if self.json["cell_type"] == "code":
@@ -224,24 +225,24 @@ class Cell:
         src_list = [line + "\n" for line in self.input_buffer.text.splitlines()]
         # Fixes exit from cell when nothing is typed neither no output with single cell
         if src_list:
-          src_list[-1] = src_list[-1][:-1]
-          self.json["source"] = src_list
+            src_list[-1] = src_list[-1][:-1]
+            self.json["source"] = src_list
 
-    def call_external_process(self,fname):
-      import subprocess
-      try:
-        subprocess.call(["python3", fname])
-      except subprocess.CalledProcessError as e:
-        self.output.content = e.output
-        pass
-      self.notebook.execution_count += 1
-      self.output.content = FormattedTextControl(text="ERROR")
- 
-      return(self.callback_external_process)
-      
+    def call_external_process(self, fname):
+        import subprocess
+
+        try:
+            subprocess.call(["python3", fname])
+        except subprocess.CalledProcessError as e:
+            self.output.content = e.output
+            pass
+        self.notebook.execution_count += 1
+        self.output.content = FormattedTextControl(text="ERROR")
+
+        return self.callback_external_process
 
     def callback_external_process(self):
-      return(None)
+        return None
 
     def run_in_console(self):
         self.clear_output()
@@ -251,22 +252,26 @@ class Cell:
                 if self not in self.notebook.executing_cells.values():
                     self.notebook.dirty = True
                     executing_text = code
-                    fname="tmp_nbt_"
+                    fname = "tmp_nbt_"
                     import random
-                    for i in range(1,16):
-                      fname+=chr(random.randint(97,122))
-                    fname+=".py"
-                    f = open(fname,"w")
+
+                    for i in range(1, 16):
+                        fname += chr(random.randint(97, 122))
+                    fname += ".py"
+                    f = open(fname, "w")
                     f.write(executing_text)
                     f.close()
-                    from  prompt_toolkit.application.run_in_terminal import run_in_terminal
+                    from prompt_toolkit.application.run_in_terminal import (
+                        run_in_terminal,
+                    )
+
                     success = run_in_terminal(
-                      self.call_external_process(fname),in_executor=True
+                        self.call_external_process(fname), in_executor=True
                     )
                     import os
+
                     os.remove(fname)
 
- 
     async def run(self):
         self.clear_output()
         if self.json["cell_type"] == "code":
@@ -284,16 +289,16 @@ class Cell:
                     self.notebook.msg_id_2_execution_count[msg_id] = execution_count
                     self.notebook.executing_cells[execution_count] = self
                     # LOG EXECUTION STATUS
-                    self.notebook.kd.log=False
+                    self.notebook.kd.log = False
                     # this is added to eliminate hangs during execution
                     try:
-                      await self.notebook.kd.execute(
-                          self.input_buffer.text, msg_id=msg_id
-                      )
+                        await self.notebook.kd.execute(
+                            self.input_buffer.text, msg_id=msg_id
+                        )
                     except Exception as e:
-                      #print("EXCEPTION DURING EXECUTION")                      
-                      self.notebook.kernel_status="Exception"
-                      return 
+                        # print("EXCEPTION DURING EXECUTION")
+                        self.notebook.kernel_status = "Exception"
+                        return
                     del self.notebook.executing_cells[execution_count]
                     text = rich_print(
                         f"\nIn [{execution_count}]:",
