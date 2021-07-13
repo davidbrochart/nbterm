@@ -8,11 +8,10 @@ import typer
 from nbterm import __version__
 from .notebook import Notebook
 
+from jupyter_client.kernelspec import KernelSpecManager
 
 def list_kernels_callback(value: bool):
     if value:
-        from jupyter_client.kernelspec import KernelSpecManager
-
         kernelSpecs = KernelSpecManager().find_kernel_specs()
         kernels = ""
         for kernel in kernelSpecs:
