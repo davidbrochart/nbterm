@@ -8,19 +8,18 @@ import typer
 from nbterm import __version__
 from .notebook import Notebook
 
-# TEST FAILS BECAUSE OF KERNEL LIST COMMENTING FOR NOW
-# try:
-#  from jupyter_client import kernelspec as ks
-#  def list_kernels_callback(value: bool):
-#    if value:
-#        kernelSpecs = ks.KernelSpecManager().find_kernel_specs()
-#        kernels = ""
-#        for kernel in kernelSpecs:
-#            # print(kernel)
-#            kernels += kernel + "|" + kernelSpecs[kernel] + "\n"
-#        typer.echo(kernels[:-1])
-#        raise typer.Exit()
-# except Exception as e:
+from jupyter_client import kernelspec as ks
+
+
+def list_kernels_callback(value: bool):
+    if value:
+        kernelSpecs = ks.KernelSpecManager().find_kernel_specs()
+        kernels = ""
+        for kernel in kernelSpecs:
+            # print(kernel)
+            kernels += kernel + "|" + kernelSpecs[kernel] + "\n"
+        typer.echo(kernels[:-1])
+        raise typer.Exit()
 
 
 def list_kernels_callback(value: bool):
