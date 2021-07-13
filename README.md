@@ -149,3 +149,9 @@ cd ~/pyenv
 |= virtualenv -p /usr/bin/python3.9 nbterm
 |= source ~/pyenv/nbterm/bin/activate
 ```
+
+## VERSION LOG
+
+minor changes to v.0.0.12 by mtatton
+
+
