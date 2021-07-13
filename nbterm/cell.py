@@ -265,7 +265,7 @@ class Cell:
                         run_in_terminal,
                     )
 
-                    success = run_in_terminal(
+                    run_in_terminal(
                         self.call_external_process(fname), in_executor=True
                     )
                     import os
@@ -297,7 +297,7 @@ class Cell:
                         )
                     except Exception as e:
                         # print("EXCEPTION DURING EXECUTION")
-                        self.notebook.kernel_status = "Exception"
+                        self.notebook.kernel_status = "Exception "+str(e)
                         return
                     del self.notebook.executing_cells[execution_count]
                     text = rich_print(

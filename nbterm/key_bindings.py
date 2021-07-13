@@ -30,12 +30,12 @@ class KeyBindings:
             return not self.help_mode
 
         @self.key_bindings.add("c-t", filter=edit_mode)
-        def ce_mode_i(event):
+        def ce_mode_t(event):
             # self.cell_edit_mode = True
             self.edit_result_in_editor()
 
         @self.key_bindings.add("c-w", filter=edit_mode)
-        def ce_mode_i(event):
+        def ce_mode_w(event):
             self.edit_in_editor()
             self.save()
 

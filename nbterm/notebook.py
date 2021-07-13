@@ -54,7 +54,7 @@ class Notebook(Help, Format, KeyBindings):
     dirty: bool
     quitting: bool
     kernel_cwd: Path
-    kernel_status: "init"
+    kernel_status: str
 
     def __init__(
         self,
@@ -125,8 +125,9 @@ class Notebook(Help, Format, KeyBindings):
         if not self.kd:
             try:
                 await self.kd.start()
-            except:
-                self.kernel_status = "error"
+            except Exception as e:
+                #print(str(e))
+                self.kernel_status = "error"+str(e) 
                 pass
         for i in range(0, len(self.cells)):
             await self.run_cell(i)
@@ -430,8 +431,8 @@ class Notebook(Help, Format, KeyBindings):
         try:
             if self.kd:
                 await self.kd.stop()
-        except:
-            print("Kernel stop error.")
+        except Exception as e:
+            print("Kernel stop error." + str(e))
         self.app.exit()
 
     def go_up(self):
