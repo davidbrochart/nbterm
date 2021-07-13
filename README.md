@@ -136,3 +136,15 @@ ipykernel        : 6.0.0
 jupyter client   : 6.1.12
 
 ```
+
+## Runtime Environment recommendations
+
+
+Keep separated environment for the nbterm
+
+```
+|= mkdir -p ~/pyenv
+cd ~/pyenv
+|= virtualenv -p /usr/bin/python3.9 nbterm
+|= source ~/pyenv/nbterm/bin/activate
+```
