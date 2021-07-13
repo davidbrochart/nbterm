@@ -1,5 +1,5 @@
 from prompt_toolkit.filters import Condition
-from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.key_binding import KeyBindings as KeBi
 
 
 class KeyBindings:
@@ -8,7 +8,7 @@ class KeyBindings:
     help_mode: bool
 
     # Handling of escape.
-    key_bindings = KeyBindings()
+    key_bindings = KeBi()
     handle = key_bindings.add
     handle("escape", eager=True)
 
