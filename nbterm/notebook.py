@@ -126,8 +126,8 @@ class Notebook(Help, Format, KeyBindings):
             try:
                 await self.kd.start()
             except Exception as e:
-                #print(str(e))
-                self.kernel_status = "error"+str(e) 
+                # print(str(e))
+                self.kernel_status = "error" + str(e)
                 pass
         for i in range(0, len(self.cells)):
             await self.run_cell(i)
