@@ -129,7 +129,8 @@ using Python 3.9 and iPyKernel==6.0.0
 ```
 pip install ipykernel==6.0.0
 
-jupyter --version:
+$ jupyter --version:
+
 jupyter core     : 4.7.1
 ipython          : 7.25.0
 ipykernel        : 6.0.0
