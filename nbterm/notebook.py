@@ -128,7 +128,7 @@ class Notebook(Help, Format, KeyBindings):
           except:
             self.kernel_status = "error"
             pass
-        for i in range(1,len(self.cells)-1):
+        for i in range(0,len(self.cells)-1):
           await self.run_cell(i)
         self.focus(0)
 
