@@ -1,7 +1,6 @@
 from prompt_toolkit.filters import Condition
 from prompt_toolkit.key_binding import KeyBindings
 
-
 class KeyBindings:
 
     edit_mode: bool
@@ -182,3 +181,13 @@ class KeyBindings:
         def b(event):
             self.quitting = False
             self.insert_cell(below=True)
+
+        @self.key_bindings.add("c-p", filter=command_mode)
+        async def c_p(event):
+            await self.run_all()
+
+        @self.key_bindings.add("c-g", filter=command_mode)
+        def G(event):
+            self.goto_last_cell()
+
+

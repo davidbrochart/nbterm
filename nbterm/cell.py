@@ -1,4 +1,3 @@
-import copy
 import uuid
 from typing import Dict, List, Any, Optional, Union, cast
 
@@ -10,7 +9,7 @@ from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
 from rich.syntax import Syntax
 from rich.markdown import Markdown
 from rich.console import Console
-
+import copy
 
 ONE_COL: Window = Window(width=1)
 ONE_ROW: Window = Window(height=1)

@@ -118,10 +118,19 @@ class Notebook(Help, Format, KeyBindings):
         self.focus(idx)
         await self.current_cell.run()
 
+    def goto_last_cell(self):
+        self.focus(len(self.cells)-1)
+
     async def run_all(self):
-        await self.kd.start()
-        for i in range(len(self.cells)):
-            await self.run_cell(i)
+        if not self.kd:
+          try:
+            await self.kd.start()
+          except:
+            self.kernel_status = "error"
+            pass
+        for i in range(1,len(self.cells)-1):
+          await self.run_cell(i)
+        self.focus(0)
 
     def show(self):
         self.key_bindings = PtKeyBindings()
@@ -414,14 +423,15 @@ class Notebook(Help, Format, KeyBindings):
         await self.app.run_async()
 
     async def exit(self):
+        # Causes whole term to hang. Better autosave than hang
         if self.dirty and not self.quitting:
           self.quitting = True
           return
-        if self.kd:
-          try:
+        try:
+          if self.kd:
             await self.kd.stop()
-          except:
-            print("Kernel stop error.")
+        except:
+          print("Kernel stop error.")
         self.app.exit()
 
     def go_up(self):

@@ -25,6 +25,7 @@ md = Markdown(
     "\n"
     "- `up` or `k`: select cell above.\n"
     "- `down` or `j`: select cell below.\n"
+    "- `ctrl-g`: go to last cell.\n"
     "- `ctrl-up`: move cell above.\n"
     "- `ctrl-down`: move cell below.\n"
     "- `a`: insert cell above.\n"
@@ -39,6 +40,7 @@ md = Markdown(
     "- `ctrl-e` or `enter`: run cell.\n"
     "- `ctrl-r` or `alt-enter`: run cell and select below.\n"
     "- `ctrl-s`: save.\n"
+    "- `ctrl-p`: run all cells.\n"
     "- `ctrl-q`: exit.\n"
     "- `ctrl-h`: show help.\n"
 )

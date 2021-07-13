@@ -54,6 +54,7 @@ In command mode:
 
 - `up` or k: select cell above.
 - `down` or j: select cell below.
+- `ctrl-g`: go to last cell.
 - `ctrl-up`: move cell above.
 - `ctrl-down`: move cell below.
 - `a`: insert cell above.
@@ -68,6 +69,7 @@ In command mode:
 - `ctrl-e` or `enter`: run cell.
 - `ctrl-r` or `alt-enter`: run cell and select below.
 - `ctrl-s`: save.
+- `ctrl-p`: run all cells.
 - `ctrl-q`: exit.
 - `ctrl-h`: show help.
 
