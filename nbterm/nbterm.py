@@ -8,7 +8,7 @@ import typer
 from nbterm import __version__
 from .notebook import Notebook
 
-from jupyter_client.kernelspec 
+import jupyter_client.kernelspec
 
 
 def list_kernels_callback(value: bool):
