@@ -54,6 +54,7 @@ In command mode:
 
 - `up` or k: select cell above.
 - `down` or j: select cell below.
+- `1` `g`: go to first cell.
 - `ctrl-g`: go to last cell.
 - `ctrl-up`: move cell above.
 - `ctrl-down`: move cell below.
@@ -66,6 +67,11 @@ In command mode:
 - `o`: set as code cell.
 - `m`: set as Markdown cell.
 - `l`: clear cell outputs.
+- `ctrl-f`: Search
+- `n`: Repeat last search.
+- `ctrl-n`: Search backwards.
+- `m`,`<any>`: Set mark <key>.
+- `'`,`<any>`: Go to mark <key>.
 - `ctrl-e` or `enter`: run cell.
 - `ctrl-r` or `alt-enter`: run cell and select below.
 - `ctrl-s`: save.

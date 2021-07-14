@@ -18,6 +18,7 @@ from prompt_toolkit import Application
 from rich.console import Console
 import kernel_driver  # type: ignore
 from kernel_driver import KernelDriver
+from prompt_toolkit.buffer import Buffer
 
 from .cell import (
     Cell,
@@ -55,6 +56,9 @@ class Notebook(Help, Format, KeyBindings):
     quitting: bool
     kernel_cwd: Path
     kernel_status: str
+    editor_msg: str
+    search_buffer: Buffer
+    marks: List[int]
 
     def __init__(
         self,
@@ -87,6 +91,11 @@ class Notebook(Help, Format, KeyBindings):
         self.msg_id_2_execution_count = {}
         self.edit_mode = False
         self.help_mode = False
+        self.search_buffer = Buffer()
+        self.marks = []
+        for i in range(256):
+            self.marks.append(0)
+        self.editor_msg = "|x|"
 
     def set_language(self):
         self.kernel_name = self.json["metadata"]["kernelspec"]["name"]
@@ -120,6 +129,9 @@ class Notebook(Help, Format, KeyBindings):
 
     def goto_last_cell(self):
         self.focus(len(self.cells) - 1)
+
+    def goto_first_cell(self):
+        self.focus(0)
 
     async def run_all(self):
         if not self.kd:
@@ -190,6 +202,7 @@ class Notebook(Help, Format, KeyBindings):
                 # f" @ {self.kernel_cwd} - {self.current_cell_idx + 1}/{len(self.cells)}"
                 f" @ {self.current_cell_idx + 1}/{len(self.cells)}"
             )
+            text += " " + self.editor_msg
             return text
 
         self.top_bar = FormattedTextToolbar(
@@ -440,3 +453,46 @@ class Notebook(Help, Format, KeyBindings):
 
     def go_down(self):
         self.focus(self.current_cell_idx + 1, no_change=True)
+
+    def nb_search(self):
+        self.search_buffer.open_in_editor()
+        search_str = self.search_buffer.text
+        idx = self.current_cell_idx + 1
+        for i in range(idx, len(self.cells)):
+            txt = self.cells[i].input_buffer.text
+            if search_str in txt:
+                # print("FOUND: "+str(txt))
+                self.focus(i)
+                break
+
+    def nb_repeat_search(self):
+        search_str = self.search_buffer.text
+        if search_str:
+            idx = self.current_cell_idx + 1
+            for i in range(idx, len(self.cells)):
+                txt = self.cells[i].input_buffer.text
+                if search_str in txt:
+                    # print("FOUND: "+str(txt))
+                    self.focus(i)
+                    break
+
+    def nb_search_backwards(self):
+        search_str = self.search_buffer.text
+        if search_str:
+            idx = self.current_cell_idx - 1
+            for i in range(idx, 0, -1):
+                txt = self.cells[i].input_buffer.text
+                if search_str in txt:
+                    # print("FOUND: "+str(txt))
+                    self.focus(i)
+                    break
+
+    def nb_set_mark(self, mark_no):
+        idx = self.current_cell_idx
+        self.marks[mark_no] = idx
+        self.editor_msg = "Mark '" + str(chr(mark_no)) + "' set to cell " + str(idx)
+
+    def nb_goto_mark(self, mark_no):
+        idx = self.marks[mark_no]
+        self.focus(idx)
+        self.editor_msg = "Goto Mark '" + str(chr(mark_no)) + "' @ cell " + str(idx)
