@@ -70,6 +70,8 @@ In command mode:
 - `ctrl-f`: Search
 - `n`: Repeat last search.
 - `ctrl-n`: Search backwards.
+- `m`,`<any>`: Set mark <key>.
+- `'`,`<any>`: Go to mark <key>.
 - `ctrl-e` or `enter`: run cell.
 - `ctrl-r` or `alt-enter`: run cell and select below.
 - `ctrl-s`: save.

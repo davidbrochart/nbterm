@@ -41,6 +41,8 @@ md = Markdown(
     "- `ctrl-f`: Search.\n"
     "- `n`: Repeat last search.\n"
     "- `ctrl-n`: Search backwards.\n"
+    "- `m`,`<any>`: Set mark <key>.\n"
+    "- `'`,`<any>`: Go to mark <key>.\n"
     "- `ctrl-e` or `enter`: run cell.\n"
     "- `ctrl-r` or `alt-enter`: run cell and select below.\n"
     "- `ctrl-s`: save.\n"

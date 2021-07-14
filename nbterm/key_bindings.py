@@ -206,3 +206,14 @@ class KeyBindings:
         @self.key_bindings.add("c-n", filter=command_mode)
         def c_n(event):
             self.nb_search_backwards()
+
+        @self.key_bindings.add("m","<any>", filter=command_mode)
+        def set_m(event):
+          skey=ord(event.key_sequence[1].key)
+          self.nb_set_mark(skey)
+
+        @self.key_bindings.add("'","<any>", filter=command_mode)
+        def goto_m(event):
+          skey=ord(event.key_sequence[1].key)
+          self.nb_goto_mark(skey)
+
