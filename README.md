@@ -158,6 +158,7 @@ cd ~/pyenv
 
 ## VERSION LOG
 
+minor changes to v.0.0.13 by mtatton
 minor changes to v.0.0.12 by mtatton
 
 
