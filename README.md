@@ -67,6 +67,9 @@ In command mode:
 - `o`: set as code cell.
 - `m`: set as Markdown cell.
 - `l`: clear cell outputs.
+- `ctrl-f`: Search
+- `n`: Repeat last search.
+- `ctrl-n`: Search backwards.
 - `ctrl-e` or `enter`: run cell.
 - `ctrl-r` or `alt-enter`: run cell and select below.
 - `ctrl-s`: save.

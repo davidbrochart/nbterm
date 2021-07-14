@@ -21,6 +21,7 @@ def list_kernels_callback(value: bool):
         typer.echo(kernels[:-1])
         raise typer.Exit()
 
+
 def version_callback(value: bool):
     if value:
         typer.echo(f"nbterm {__version__}")

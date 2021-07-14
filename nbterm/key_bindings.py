@@ -191,6 +191,18 @@ class KeyBindings:
         def G(event):
             self.goto_last_cell()
 
-        @self.key_bindings.add("1","g", filter=command_mode)
+        @self.key_bindings.add("1", "g", filter=command_mode)
         def k_1_g(event):
             self.goto_first_cell()
+
+        @self.key_bindings.add("c-f", filter=command_mode)
+        def c_f(event):
+            self.nb_search()
+
+        @self.key_bindings.add("n", filter=command_mode)
+        def n(event):
+            self.nb_repeat_search()
+
+        @self.key_bindings.add("c-n", filter=command_mode)
+        def c_n(event):
+            self.nb_search_backwards()

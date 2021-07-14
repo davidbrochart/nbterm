@@ -18,6 +18,7 @@ from prompt_toolkit import Application
 from rich.console import Console
 import kernel_driver  # type: ignore
 from kernel_driver import KernelDriver
+from prompt_toolkit.buffer import Buffer
 
 from .cell import (
     Cell,
@@ -55,6 +56,7 @@ class Notebook(Help, Format, KeyBindings):
     quitting: bool
     kernel_cwd: Path
     kernel_status: str
+    search_buffer: Buffer
 
     def __init__(
         self,
@@ -87,6 +89,7 @@ class Notebook(Help, Format, KeyBindings):
         self.msg_id_2_execution_count = {}
         self.edit_mode = False
         self.help_mode = False
+        self.search_buffer = Buffer()
 
     def set_language(self):
         self.kernel_name = self.json["metadata"]["kernelspec"]["name"]
@@ -443,3 +446,36 @@ class Notebook(Help, Format, KeyBindings):
 
     def go_down(self):
         self.focus(self.current_cell_idx + 1, no_change=True)
+
+    def nb_search(self):
+        self.search_buffer.open_in_editor()
+        search_str = self.search_buffer.text
+        idx = self.current_cell_idx + 1
+        for i in range(idx, len(self.cells)):
+            txt = self.cells[i].input_buffer.text
+            if search_str in txt:
+                # print("FOUND: "+str(txt))
+                self.focus(i)
+                break
+
+    def nb_repeat_search(self):
+        search_str = self.search_buffer.text
+        if search_str:
+            idx = self.current_cell_idx + 1
+            for i in range(idx, len(self.cells)):
+                txt = self.cells[i].input_buffer.text
+                if search_str in txt:
+                    # print("FOUND: "+str(txt))
+                    self.focus(i)
+                    break
+
+    def nb_search_backwards(self):
+        search_str = self.search_buffer.text
+        if search_str:
+            idx = self.current_cell_idx - 1
+            for i in range(idx, 0, -1):
+                txt = self.cells[i].input_buffer.text
+                if search_str in txt:
+                    # print("FOUND: "+str(txt))
+                    self.focus(i)
+                    break
