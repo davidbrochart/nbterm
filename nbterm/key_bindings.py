@@ -190,3 +190,7 @@ class KeyBindings:
         @self.key_bindings.add("c-g", filter=command_mode)
         def G(event):
             self.goto_last_cell()
+
+        @self.key_bindings.add("1","g", filter=command_mode)
+        def k_1_g(event):
+            self.goto_first_cell()

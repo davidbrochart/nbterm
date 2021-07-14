@@ -121,6 +121,9 @@ class Notebook(Help, Format, KeyBindings):
     def goto_last_cell(self):
         self.focus(len(self.cells) - 1)
 
+    def goto_first_cell(self):
+        self.focus(0)
+
     async def run_all(self):
         if not self.kd:
             try:

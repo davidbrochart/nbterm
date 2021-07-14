@@ -26,6 +26,7 @@ md = Markdown(
     "- `up` or `k`: select cell above.\n"
     "- `down` or `j`: select cell below.\n"
     "- `ctrl-g`: go to last cell.\n"
+    "- `1` `g`: go to first cell.\n"
     "- `ctrl-up`: move cell above.\n"
     "- `ctrl-down`: move cell below.\n"
     "- `a`: insert cell above.\n"

@@ -54,6 +54,7 @@ In command mode:
 
 - `up` or k: select cell above.
 - `down` or j: select cell below.
+- `1` `g`: go to first cell.
 - `ctrl-g`: go to last cell.
 - `ctrl-up`: move cell above.
 - `ctrl-down`: move cell below.
