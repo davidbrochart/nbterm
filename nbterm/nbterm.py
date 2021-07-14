@@ -8,18 +8,18 @@ import typer
 from nbterm import __version__
 from .notebook import Notebook
 
-from jupyter_client.kernelspec import KernelSpecManager
+# from jupyter_client.kernelspec import KernelSpecManager
 
 
-def list_kernels_callback(value: bool):
-    if value:
-        kernelSpecs = KernelSpecManager().find_kernel_specs()
-        kernels = ""
-        for kernel in kernelSpecs:
-            # print(kernel)
-            kernels += kernel + "|" + kernelSpecs[kernel] + "\n"
-        typer.echo(kernels[:-1])
-        raise typer.Exit()
+# def list_kernels_callback(value: bool):
+#    # if value:
+#    #    kernelSpecs = KernelSpecManager().find_kernel_specs()
+#    #    kernels = ""
+#    #    for kernel in kernelSpecs:
+#    #        # print(kernel)
+#    #        kernels += kernel + "|" + kernelSpecs[kernel] + "\n"
+#    typer.echo("run: jupyter kernelspec list")
+#    raise typer.Exit()
 
 
 def version_callback(value: bool):
@@ -55,12 +55,12 @@ def main(
     version: Optional[bool] = typer.Option(
         None, "--version", callback=version_callback, help="Show the version and exit."
     ),
-    list_kernels: Optional[bool] = typer.Option(
-        None,
-        "--list-kernels",
-        callback=list_kernels_callback,
-        help="Show the available kernels.",
-    ),
+    # list_kernels: Optional[bool] = typer.Option(
+    #    None,
+    #    "--list-kernels",
+    #    callback=list_kernels_callback,
+    #    help="Show the available kernels.",
+    # ),
     kernel: Optional[str] = typer.Option(
         # None, "--kernel", callback=kernels_callback, help="Show the available kernels."
         None,

@@ -94,7 +94,7 @@ class Notebook(Help, Format, KeyBindings):
         self.search_buffer = Buffer()
         self.marks = []
         for i in range(256):
-          self.marks.append(0)
+            self.marks.append(0)
         self.editor_msg = "|x|"
 
     def set_language(self):
@@ -487,12 +487,12 @@ class Notebook(Help, Format, KeyBindings):
                     self.focus(i)
                     break
 
-    def nb_set_mark(self,mark_no):
+    def nb_set_mark(self, mark_no):
         idx = self.current_cell_idx
         self.marks[mark_no] = idx
-        self.editor_msg = "Mark '" +str(chr(mark_no)) + "' set to cell " + str(idx)
+        self.editor_msg = "Mark '" + str(chr(mark_no)) + "' set to cell " + str(idx)
 
-    def nb_goto_mark(self,mark_no):
-        idx=self.marks[mark_no]
+    def nb_goto_mark(self, mark_no):
+        idx = self.marks[mark_no]
         self.focus(idx)
-        self.editor_msg = "Goto Mark '" +str(chr(mark_no)) +"' @ cell " + str(idx)
+        self.editor_msg = "Goto Mark '" + str(chr(mark_no)) + "' @ cell " + str(idx)
