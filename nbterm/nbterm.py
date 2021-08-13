@@ -13,7 +13,6 @@ from jupyter_client.kernelspec import KernelSpecManager
 
 def debug_callback(value: bool):
     if value:
-        debug = True
         print("DEBUG MODE")
 
 
