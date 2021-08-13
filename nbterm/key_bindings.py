@@ -130,7 +130,7 @@ class KeyBindings:
             self.quitting = False
             self.clear_output()
 
-        @self.key_bindings.add("m", filter=command_mode)
+        @self.key_bindings.add("r", filter=command_mode)
         def m(event):
             self.quitting = False
             self.markdown_cell()

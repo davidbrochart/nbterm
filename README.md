@@ -35,6 +35,24 @@ Run a notebook in batch mode:
 $ nbterm --run my_notebook.ipynb
 ```
 
+To list available kernels use:
+
+```
+$ nbterm --list-kernels
+```
+
+To use specific kernel use:
+
+```
+$ nbterm --kernel python3 my_notebook.ipynb
+```
+
+To debug kernel use:
+
+```
+$ nbterm --debug my_notebook.ipynb
+```
+
 ## Key bindings
 
 There are two modes: edit mode, and command mode.

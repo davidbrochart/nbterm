@@ -59,6 +59,7 @@ class Notebook(Help, Format, KeyBindings):
     editor_msg: str
     search_buffer: Buffer
     marks: List[int]
+    debug: bool
 
     def __init__(
         self,
@@ -67,7 +68,9 @@ class Notebook(Help, Format, KeyBindings):
         kernel_name: str = "",
         no_kernel: bool = False,
         save_path: Optional[Path] = None,
+        debug: bool = False,
     ):
+        self.debug = debug
         self.nb_path = nb_path.resolve()
         self.kernel_cwd = kernel_cwd.resolve()
         os.chdir(self.kernel_cwd)

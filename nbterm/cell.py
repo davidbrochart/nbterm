@@ -287,7 +287,8 @@ class Cell:
                     self.notebook.msg_id_2_execution_count[msg_id] = execution_count
                     self.notebook.executing_cells[execution_count] = self
                     # LOG EXECUTION STATUS
-                    self.notebook.kd.log = False
+                    self.notebook.kd.log = self.notebook.debug
+                    # self.notebook.kd.log = True
                     # this is added to eliminate hangs during execution
                     try:
                         await self.notebook.kd.execute(

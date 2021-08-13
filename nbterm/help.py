@@ -36,7 +36,7 @@ md = Markdown(
     "- `ctrl-v`: paste cell above.\n"
     "- `v`: paste cell below.\n"
     "- `o`: set as code cell.\n"
-    "- `m`: set as Markdown cell.\n"
+    "- `r`: set as Markdown cell.\n"
     "- `l`: clear cell outputs.\n"
     "- `ctrl-f`: Search.\n"
     "- `n`: Repeat last search.\n"

@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 from typing import Optional
+from jupyter_client.kernelspec import KernelSpecManager
 
 from .cell import Cell
 
@@ -29,93 +30,20 @@ class Format:
             f.write("\n")
 
     def create_nb(self, kernelName="python3") -> None:
-        if kernelName == "python3":
-            self.json = {
-                "metadata": {
-                    "kernelspec": {
-                        "display_name": "Python 3",
-                        "language": "python",
-                        "name": "python",
-                    },
-                    "language_info": {
-                        "file_extension": ".py",
-                        "mimetype": "text/x-python",
-                        "name": "python",
-                        "version": "3.9.3",
-                    },
+        kernelSpecs = KernelSpecManager().get_all_specs()
+        spec = kernelSpecs[kernelName]["spec"]
+        self.json = {
+            "metadata": {
+                "kernelspec": {
+                    "display_name": spec["display_name"],
+                    "language": spec["language"],
+                    "name": kernelName,
                 },
-                "nbformat": 4,
-                "nbformat_minor": 4,
-            }
-        elif kernelName == "c":
-            self.json = {
-                "metadata": {
-                    "kernelspec": {
-                        "display_name": "C",
-                        "language": "c",
-                        "name": "c",
-                    },
-                    "language_info": {
-                        "file_extension": ".c",
-                        "mimetype": "text/plain",
-                        "name": "c",
-                    },
-                },
-                "nbformat": 4,
-                "nbformat_minor": 4,
-            }
-        elif kernelName == "jupyter-php":
-            self.json = {
-                "metadata": {
-                    "kernelspec": {
-                        "display_name": "PHP",
-                        "language": "php",
-                        "name": "jupyter-php",
-                    },
-                    "language_info": {
-                        "file_extension": ".php",
-                        "mimetype": "text/x-php",
-                        "name": "PHP",
-                    },
-                },
-                "nbformat": 4,
-                "nbformat_minor": 4,
-            }
-        elif kernelName == "javascript":
-            self.json = {
-                "metadata": {
-                    "kernelspec": {
-                        "display_name": "JavaScript",
-                        "language": "js",
-                        "name": "javascript",
-                    },
-                    "language_info": {
-                        "file_extension": ".py",
-                        "mimetype": "text/x-python",
-                        "name": "javascript",
-                    },
-                },
-                "nbformat": 4,
-                "nbformat_minor": 4,
-            }
-        else:
-            self.json = {
-                "metadata": {
-                    "kernelspec": {
-                        "display_name": "Python 3",
-                        "language": "python",
-                        "name": "python3",
-                    },
-                    "language_info": {
-                        "file_extension": ".py",
-                        "mimetype": "text/x-python",
-                        "name": "python",
-                        "version": "3.9.3",
-                    },
-                },
-                "nbformat": 4,
-                "nbformat_minor": 4,
-            }
-
+                "language_info": {"name": ""},
+            },
+            "nbformat": 4,
+            "nbformat_minor": 4,
+        }
+        
         self.set_language()  # type: ignore
         self.cells = [Cell(self)]

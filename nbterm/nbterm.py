@@ -8,18 +8,25 @@ import typer
 from nbterm import __version__
 from .notebook import Notebook
 
-# from jupyter_client.kernelspec import KernelSpecManager
+from jupyter_client.kernelspec import KernelSpecManager
 
 
-# def list_kernels_callback(value: bool):
-#    # if value:
-#    #    kernelSpecs = KernelSpecManager().find_kernel_specs()
-#    #    kernels = ""
-#    #    for kernel in kernelSpecs:
-#    #        # print(kernel)
-#    #        kernels += kernel + "|" + kernelSpecs[kernel] + "\n"
-#    typer.echo("run: jupyter kernelspec list")
-#    raise typer.Exit()
+def debug_callback(value: bool):
+    if value:
+        debug = True
+        print("DEBUG MODE")
+
+
+def list_kernels_callback(value: bool):
+    if value:
+        kernelSpecs = KernelSpecManager().find_kernel_specs()
+        kernels = ""
+        for kernel in kernelSpecs:
+            # print(kernel)
+            kernels += kernel + "|" + kernelSpecs[kernel] + "\n"
+        print(kernels)
+        typer.echo("or run: jupyter kernelspec list")
+        raise typer.Exit()
 
 
 def version_callback(value: bool):
@@ -55,12 +62,16 @@ def main(
     version: Optional[bool] = typer.Option(
         None, "--version", callback=version_callback, help="Show the version and exit."
     ),
-    # list_kernels: Optional[bool] = typer.Option(
-    #    None,
-    #    "--list-kernels",
-    #    callback=list_kernels_callback,
-    #    help="Show the available kernels.",
-    # ),
+    list_kernels: Optional[bool] = typer.Option(
+        None,
+        "--list-kernels",
+        callback=list_kernels_callback,
+        help="Show the available kernels.",
+    ),
+    debug: Optional[bool] = typer.Option(
+        None,
+        help="Debug the kernel calls.",
+    ),
     kernel: Optional[str] = typer.Option(
         # None, "--kernel", callback=kernels_callback, help="Show the available kernels."
         None,
@@ -89,12 +100,15 @@ def main(
         typer.echo(f"notebook_path={notebook_path}")
         typer.echo(f"kernel_cwd={kernel_cwd}")
         sys.exit(0)
+    # if debug is not None:
+    #    debug=True
     nb = Notebook(
         notebook_path,
         kernel_cwd=kernel_cwd,
         kernel_name=kernel,
         no_kernel=no_kernel or False,
         save_path=save_path,
+        debug=bool(debug),
     )
     if run:
         assert no_kernel is not True
