@@ -44,6 +44,6 @@ class Format:
             "nbformat": 4,
             "nbformat_minor": 4,
         }
-        
+
         self.set_language()  # type: ignore
         self.cells = [Cell(self)]
