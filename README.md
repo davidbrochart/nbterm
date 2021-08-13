@@ -35,24 +35,6 @@ Run a notebook in batch mode:
 $ nbterm --run my_notebook.ipynb
 ```
 
-To list available kernels use:
-
-```
-$ nbterm --list-kernels
-```
-
-To use specific kernel use:
-
-```
-$ nbterm --kernel python3 my_notebook.ipynb
-```
-
-To debug kernel use:
-
-```
-$ nbterm --debug my_notebook.ipynb
-```
-
 ## Key bindings
 
 There are two modes: edit mode, and command mode.
@@ -83,7 +65,7 @@ In command mode:
 - `ctrl-v`: paste cell above.
 - `v`: paste cell below.
 - `o`: set as code cell.
-- `m`: set as Markdown cell.
+- `r`: set as Markdown cell.
 - `l`: clear cell outputs.
 - `ctrl-f`: Search
 - `n`: Repeat last search.
@@ -140,6 +122,18 @@ chmod u+x jupyter-php-installer.phar
 ./jupyter-php-installer.phar install
 ```
 
+### sqlite kernel from sqlok
+
+```
+git clone https://github.com/mtatton/sqlok
+cd ./sqlok/sqlik/sqli_kernel
+python install
+python3 -c "import site; print(site.getsitepackages())"
+cp -R ../sqli_kernel <to one of the site packages location>
+test using: python -m sqli_kernel 
+then use: nbterm --kernel sqlik
+```
+
 ### python3 kernel
 
 ```
@@ -177,8 +171,6 @@ cd ~/pyenv
 ## VERSIONS LOG
 
 ```
-minor changes to v.0.0.15 by mtatton
-minor changes to v.0.0.14 by mtatton
 minor changes to v.0.0.13 by mtatton
 minor changes to v.0.0.12 by mtatton
 ```
