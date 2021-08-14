@@ -125,12 +125,8 @@ chmod u+x jupyter-php-installer.phar
 ### sqlite kernel from sqlok
 
 ```
-git clone https://github.com/mtatton/sqlok
-cd ./sqlok/sqlik/sqli_kernel
-python install
-python3 -c "import site; print(site.getsitepackages())"
-cp -R ../sqli_kernel <to one of the site packages location>
-test using: python -m sqli_kernel 
+pip install sqli-kernel
+sqlik_install
 then use: nbterm --kernel sqlik
 ```
 
