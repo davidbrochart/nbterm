@@ -31,7 +31,12 @@ class Format:
 
     def create_nb(self, kernelName="python3") -> None:
         kernelSpecs = KernelSpecManager().get_all_specs()
-        spec = kernelSpecs[kernelName]["spec"]
+        if kernelName in kernelSpecs:
+            spec = kernelSpecs[kernelName]["spec"]
+        else:
+            print("kernel " + kernelName + " not found.")
+            print("Please use different kernel. See nbtermix --list-kernels")
+            exit(0)
         self.json = {
             "metadata": {
                 "kernelspec": {
@@ -44,6 +49,5 @@ class Format:
             "nbformat": 4,
             "nbformat_minor": 4,
         }
-
         self.set_language()  # type: ignore
         self.cells = [Cell(self)]

@@ -7,7 +7,7 @@ from prompt_toolkit import ANSI
 from .cell import rich_print
 
 md = Markdown(
-    "## nbterm help\n"
+    "## nbtermix help\n"
     "There are two modes: edit mode, and command mode.\n"
     "\n"
     "- `e`: enter the edit mode, allowing to type into the cell.\n"
@@ -38,6 +38,7 @@ md = Markdown(
     "- `o`: set as code cell.\n"
     "- `r`: set as Markdown cell.\n"
     "- `l`: clear cell outputs.\n"
+    "- `f`: fold current cell input.\n"
     "- `ctrl-f`: Search.\n"
     "- `n`: Repeat last search.\n"
     "- `ctrl-n`: Search backwards.\n"

@@ -94,7 +94,7 @@ class KeyBindings:
 
         # @self.key_bindings.add("enter", filter=command_mode)
         @self.key_bindings.add("e", filter=command_mode)
-        def enter_cell(event):
+        def e(event):
             self.quitting = False
             self.enter_cell()
 
@@ -102,6 +102,10 @@ class KeyBindings:
         def escape(event):
             self.quitting = False
             self.exit_cell()
+
+        @self.key_bindings.add("f", filter=command_mode)
+        def f(event):
+            self.toggle_fold()
 
         @self.key_bindings.add("up", filter=command_mode)
         @self.key_bindings.add("k", filter=command_mode)

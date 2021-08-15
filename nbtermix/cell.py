@@ -54,7 +54,7 @@ def get_output_text_and_height(outputs: List[Dict[str, Any]]):
             continue
         text_list.append(text)
     text_ansi = ANSI("".join(text_list))
-    return text_ansi, height
+    return (text_ansi, height)
 
 
 def empty_cell_json():
@@ -77,17 +77,19 @@ class Cell:
     input_window: Window
     input_buffer: Buffer
     output_buffer: Buffer
+    fold: bool
 
     def __init__(self, notebook, cell_json: Optional[Dict[str, Any]] = None):
         self.notebook = notebook
         self.json = cell_json or empty_cell_json()
         self.input_prefix = Window(width=10)
         self.output_prefix = Window(width=10, height=0)
+        self.fold = self.notebook.fold
         input_text = "".join(self.json["source"])
         if self.json["cell_type"] == "code":
             execution_count = self.json["execution_count"] or " "
             text = rich_print(
-                f"\nIn [{execution_count}]:",
+                f"\nIn [{execution_count}]:" + self.fold_tag(),
                 style="green",
             )
             self.input_prefix.content = FormattedTextControl(text=ANSI(text))
@@ -116,6 +118,14 @@ class Cell:
         self.output = Window(content=FormattedTextControl(text=output_text))
         self.output.height = output_height
         self.output_buffer = Buffer()
+        if self.fold:
+            self.input_window.height = 1
+
+    def fold_tag(self):
+        if self.fold is False:
+            return " "
+        if self.fold is True:
+            return "-"
 
     def get_height(self) -> int:
         input_height = cast(int, self.input_window.height) + 2  # include frame
@@ -162,7 +172,7 @@ class Cell:
             self.json["cell_type"] = "code"
             self.json["outputs"] = []
             self.json["execution_count"] = None
-            text = rich_print("\nIn [ ]:", style="green")
+            text = rich_print("\nIn [ ]:" + self.fold_tag(), style="green")
             self.input_prefix.content = FormattedTextControl(text=ANSI(text))
             self.set_input_readonly()
             if prev_cell_type == "markdown":
@@ -190,6 +200,8 @@ class Cell:
         ):
             # height has changed
             self.notebook.focus(self.notebook.current_cell_idx, update_layout=True)
+        if self.fold:
+            self.input_window.height = 1
 
     def open_in_editor(self):
         self.input_buffer.open_in_editor()
@@ -199,6 +211,27 @@ class Cell:
         output_text = output_ansi.value
         self.output_buffer.text = output_text
         self.output_buffer.open_in_editor()
+
+    def set_input_toggle_fold(self):
+        execution_count = self.json["execution_count"] or " "
+        if self.fold is False:
+            self.fold = True
+            self.input_window.height = 1
+            text = rich_print(
+                f"\nIn [{execution_count}]:" + self.fold_tag(),
+                style="green",
+            )
+            self.input_prefix.content = FormattedTextControl(text=ANSI(text))
+        else:
+            self.fold = False
+            self.input_window.height = self.input_buffer.text.count("\n") + 1
+            text = rich_print(
+                f"\nIn [{execution_count}]:" + self.fold_tag(),
+                style="green",
+            )
+            self.input_prefix.content = FormattedTextControl(text=ANSI(text))
+        if self.notebook.app:
+            self.notebook.app.invalidate()
 
     def set_input_editable(self):
         if self.json["cell_type"] == "code":
@@ -277,7 +310,9 @@ class Cell:
             if code:
                 if self not in self.notebook.executing_cells.values():
                     self.notebook.dirty = True
-                    executing_text = rich_print("\nIn [*]:", style="green")
+                    executing_text = rich_print(
+                        "\nIn [*]:" + self.fold_tag(), style="green"
+                    )
                     self.input_prefix.content = FormattedTextControl(
                         text=ANSI(executing_text)
                     )
@@ -300,7 +335,7 @@ class Cell:
                         return
                     del self.notebook.executing_cells[execution_count]
                     text = rich_print(
-                        f"\nIn [{execution_count}]:",
+                        f"\nIn [{execution_count}]:" + self.fold_tag(),
                         style="green",
                     )
                     self.input_prefix.content = FormattedTextControl(text=ANSI(text))

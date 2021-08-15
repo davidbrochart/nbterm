@@ -3,19 +3,18 @@ from setuptools import setup
 
 here = os.path.abspath(os.path.dirname(__file__))
 version_ns = {}
-with open(os.path.join(here, "nbterm", "_version.py")) as f:
+with open(os.path.join(here, "nbtermix", "_version.py")) as f:
     exec(f.read(), {}, version_ns)
 
 setup(
-    name="nbterm",
+    name="nbtermix",
     version=version_ns["__version__"],
-    url="https://github.com/davidbrochart/nbterm.git",
-    author="David Brochart",
-    author_email="david.brochart@gmail.com",
-    description="A tool for viewing, editing and executing Jupyter Notebooks in the terminal",
+    url="https://github.com/mtatton/nbterm",
+    author="Michael Tatton",
+    description="Fork of nbterm. Jupyter Notebooks in Your terminal.",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    packages=["nbterm"],
+    packages=["nbtermix"],
     python_requires=">=3.7",
     install_requires=[
         "prompt-toolkit>=3.0.16",
@@ -34,7 +33,7 @@ setup(
         ],
     },
     entry_points={
-        "console_scripts": ["nbterm = nbterm.nbterm:cli"],
+        "console_scripts": ["nbtermix = nbtermix.nbterm:cli"],
     },
     classifiers=(
         "Programming Language :: Python :: 3",

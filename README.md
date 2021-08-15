@@ -1,7 +1,7 @@
-[![Build Status](https://github.com/davidbrochart/nbterm/workflows/CI/badge.svg)](https://github.com/davidbrochart/nbterm/actions)
+[![Build Status](https://github.com/davidbrochart/nbtermix/workflows/CI/badge.svg)](https://github.com/davidbrochart/nbtermix/actions)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-# nbterm
+# nbtermix
 
 Lets you view, edit and execute Jupyter Notebooks in the terminal.
 
@@ -10,13 +10,13 @@ Lets you view, edit and execute Jupyter Notebooks in the terminal.
 Using pip:
 
 ```
-pip install nbterm
+pip install nbtermix
 ```
 
 Using conda:
 
 ```
-mamba install nbterm -c conda-forge
+mamba install nbtermix -c conda-forge
 ```
 
 You will also need a kernel, e.g. `ipykernel` or `xeus-python` for Python, `xeus-cling` for C++.
@@ -26,13 +26,13 @@ You will also need a kernel, e.g. `ipykernel` or `xeus-python` for Python, `xeus
 Open an interactive notebook:
 
 ```
-$ nbterm my_notebook.ipynb
+$ nbtermix my_notebook.ipynb
 ```
 
 Run a notebook in batch mode:
 
 ```
-$ nbterm --run my_notebook.ipynb
+$ nbtermix --run my_notebook.ipynb
 ```
 
 ## Key bindings
@@ -54,8 +54,8 @@ In command mode:
 
 - `up` or k: select cell above.
 - `down` or j: select cell below.
-- `1` `g`: go to first cell.
 - `ctrl-g`: go to last cell.
+- `1` `g`: go to first cell.
 - `ctrl-up`: move cell above.
 - `ctrl-down`: move cell below.
 - `a`: insert cell above.
@@ -67,6 +67,7 @@ In command mode:
 - `o`: set as code cell.
 - `r`: set as Markdown cell.
 - `l`: clear cell outputs.
+- `f`: fold current cell input.
 - `ctrl-f`: Search
 - `n`: Repeat last search.
 - `ctrl-n`: Search backwards.
@@ -85,7 +86,7 @@ For more kernels visit:
 
 ![Jupyter kernels . jupyter/jupyter Wiki](https://github.com/jupyter/jupyter/wiki/Jupyter-kernels)
 
-This nbterm is tested on (install only if You know what You're doing):
+This nbtermix is tested on (install only if You know what You're doing):
 
 ### c kernel
 
@@ -125,9 +126,8 @@ chmod u+x jupyter-php-installer.phar
 ### sqlite kernel from sqlok
 
 ```
-pip install sqli-kernel
+pip3 install sqli-kernel
 sqlik_install
-then use: nbterm --kernel sqlik
 ```
 
 ### python3 kernel
@@ -155,19 +155,22 @@ jupyter client   : 6.1.12
 ## Runtime Environment recommendations
 
 
-Keep separated environment for the nbterm
+Keep separated environment for the nbtermix
 
 ```
 |= mkdir -p ~/pyenv
 cd ~/pyenv
-|= virtualenv -p /usr/bin/python3.9 nbterm
-|= source ~/pyenv/nbterm/bin/activate
+|= virtualenv -p /usr/bin/python3.9 nbtermix
+|= source ~/pyenv/nbtermix/bin/activate
 ```
 
-## VERSIONS LOG
+## CHANGELOG
 
 ```
 minor changes to v.0.0.15 by mtatton
++ added folding for terminal space saving
++ renamed to nbtermix
+
 minor changes to v.0.0.14 by mtatton
 minor changes to v.0.0.13 by mtatton
 minor changes to v.0.0.12 by mtatton

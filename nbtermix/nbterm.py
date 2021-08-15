@@ -5,7 +5,7 @@ from typing import Optional
 
 import typer
 
-from nbterm import __version__
+from nbtermix import __version__
 from .notebook import Notebook
 
 from jupyter_client.kernelspec import KernelSpecManager
@@ -30,7 +30,7 @@ def list_kernels_callback(value: bool):
 
 def version_callback(value: bool):
     if value:
-        typer.echo(f"nbterm {__version__}")
+        typer.echo(f"nbtermix {__version__}")
         raise typer.Exit()
 
 
@@ -67,6 +67,10 @@ def main(
         callback=list_kernels_callback,
         help="Show the available kernels.",
     ),
+    fold: Optional[bool] = typer.Option(
+        None,
+        help="Starts Notebook folded.",
+    ),
     debug: Optional[bool] = typer.Option(
         None,
         help="Debug the kernel calls.",
@@ -99,8 +103,8 @@ def main(
         typer.echo(f"notebook_path={notebook_path}")
         typer.echo(f"kernel_cwd={kernel_cwd}")
         sys.exit(0)
-    # if debug is not None:
-    #    debug=True
+    if fold is not None:
+        fold = True
     nb = Notebook(
         notebook_path,
         kernel_cwd=kernel_cwd,
@@ -108,6 +112,7 @@ def main(
         no_kernel=no_kernel or False,
         save_path=save_path,
         debug=bool(debug),
+        fold=bool(fold),
     )
     if run:
         assert no_kernel is not True

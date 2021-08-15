@@ -60,6 +60,7 @@ class Notebook(Help, Format, KeyBindings):
     search_buffer: Buffer
     marks: List[int]
     debug: bool
+    fold: bool
 
     def __init__(
         self,
@@ -69,8 +70,10 @@ class Notebook(Help, Format, KeyBindings):
         no_kernel: bool = False,
         save_path: Optional[Path] = None,
         debug: bool = False,
+        fold: bool = False,
     ):
         self.debug = debug
+        self.fold = fold
         self.nb_path = nb_path.resolve()
         self.kernel_cwd = kernel_cwd.resolve()
         os.chdir(self.kernel_cwd)
@@ -304,6 +307,11 @@ class Notebook(Help, Format, KeyBindings):
         self.current_cell.update_json()
         self.current_cell.set_input_readonly()
 
+    def toggle_fold(self):
+        self.current_cell.set_input_toggle_fold()
+        idx = self.current_cell_idx
+        self.focus(idx, update_layout=True)
+
     def edit_in_editor(self):
         self.edit_mode = True
         self.current_cell.open_in_editor()
@@ -408,6 +416,7 @@ class Notebook(Help, Format, KeyBindings):
                     "output_type": msg_type,
                 }
             )
+
             text = rich_print(f"Out[{execution_count}]:", style="red", end="")
             self.executing_cells[
                 execution_count

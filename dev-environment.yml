@@ -12,3 +12,5 @@ dependencies:
     - black
     - pytest
     - ipykernel
+    - pip:
+      - git+https://github.com/davidbrochart/kernel_driver.git#egg=kernel_driver
