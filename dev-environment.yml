@@ -4,7 +4,7 @@ channels:
 dependencies:
     - pip
     - prompt_toolkit >=3.0.16
-    - typer
+    - typer >=0.4.0
     - pygments
     - rich
     - mypy

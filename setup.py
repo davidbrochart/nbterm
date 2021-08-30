@@ -19,7 +19,7 @@ setup(
     python_requires=">=3.7",
     install_requires=[
         "prompt-toolkit>=3.0.16",
-        "typer",
+        "typer>=0.4.0",
         "pygments",
         "rich",
         "kernel_driver>=0.0.6",
