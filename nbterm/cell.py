@@ -55,6 +55,8 @@ def get_output_text_and_height(outputs: List[Dict[str, Any]]):
             continue
         text_list.append(text)
     text_ansi = ANSI("".join(text_list))
+    if text_ansi and not height:
+        height = 1
     return text_ansi, height
 
 
