@@ -155,6 +155,9 @@ class Cell:
                     [ONE_ROW, VSplit([ONE_COL, self.input_window]), ONE_ROW]
                 )
                 self.notebook.focus(self.notebook.current_cell_idx, update_layout=True)
+            elif prev_cell_type == "raw":
+                self.input = Frame(self.input_window)
+                self.notebook.focus(self.notebook.current_cell_idx, update_layout=True)
 
     def set_as_code(self):
         prev_cell_type = self.json["cell_type"]
@@ -169,6 +172,30 @@ class Cell:
             if prev_cell_type == "markdown":
                 self.input = Frame(self.input_window)
                 self.notebook.focus(self.notebook.current_cell_idx, update_layout=True)
+            elif prev_cell_type == "raw":
+                self.input = Frame(self.input_window)
+                self.notebook.focus(self.notebook.current_cell_idx, update_layout=True)
+
+    def set_as_raw(self):
+        prev_cell_type = self.json["cell_type"]
+        if prev_cell_type != "raw":
+            self.notebook.dirty = True
+            self.json["cell_type"] = "raw"
+            if "outputs" in self.json:
+                del self.json["outputs"]
+            if "execution_count" in self.json:
+                del self.json["execution_count"]
+            self.input_prefix.content = FormattedTextControl(text="")
+            self.clear_output()
+            self.set_input_readonly()
+            if prev_cell_type == "code":
+                self.input = HSplit(
+                    [ONE_ROW, VSplit([ONE_COL, self.input_window]), ONE_ROW]
+                )
+                self.notebook.focus(self.notebook.current_cell_idx, update_layout=True)
+            elif prev_cell_type == "markdown":
+                self.input = Frame(self.input_window)
+                self.notebook.focus(self.notebook.current_cell_idx, update_layout=True)
 
     def set_input_readonly(self):
         if self.json["cell_type"] == "markdown":
@@ -178,6 +205,8 @@ class Cell:
         elif self.json["cell_type"] == "code":
             code = Syntax(self.input_buffer.text, self.notebook.language)
             text = rich_print(code)[:-1]  # remove trailing "\n"
+        elif self.json["cell_type"] == "raw":
+            text = self.input_buffer.text or "Type *Raw*"
         line_nb = text.count("\n") + 1
         self.input_window.content = FormattedTextControl(text=ANSI(text))
         height_keep = self.input_window.height

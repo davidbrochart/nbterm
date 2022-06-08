@@ -97,6 +97,11 @@ class KeyBindings:
             self.quitting = False
             self.code_cell()
 
+        @self.key_bindings.add("r", filter=command_mode)
+        def r(event):
+            self.quitting = False
+            self.raw_cell()
+
         @self.key_bindings.add("c-e", filter=command_mode)
         async def c_e(event):
             self.quitting = False

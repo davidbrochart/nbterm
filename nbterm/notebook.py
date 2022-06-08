@@ -300,6 +300,9 @@ class Notebook(Help, Format, KeyBindings):
     def code_cell(self):
         self.current_cell.set_as_code()
 
+    def raw_cell(self):
+        self.current_cell.set_as_raw()
+
     async def queue_run_cell(self, and_select_below: bool = False):
         if self.kd:
             cell = self.current_cell
