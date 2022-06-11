@@ -102,9 +102,13 @@ class Cell:
                     )
                     self.output_prefix.content = FormattedTextControl(text=ANSI(text))
                     break
+            if outputs:
+                output_text, output_height = get_output_text_and_height(outputs)
+            else:
+                output_text, output_height = "", 0
         else:
             outputs = []
-        output_text, output_height = get_output_text_and_height(outputs)
+            output_text, output_height = "", 0
         self.input_window = Window()
         self.input_buffer = Buffer(on_text_changed=self.input_text_changed)
         self.input_buffer.text = input_text
@@ -150,11 +154,10 @@ class Cell:
             self.input_prefix.content = FormattedTextControl(text="")
             self.clear_output()
             self.set_input_readonly()
-            if prev_cell_type == "code":
-                self.input = HSplit(
-                    [ONE_ROW, VSplit([ONE_COL, self.input_window]), ONE_ROW]
-                )
-                self.notebook.focus(self.notebook.current_cell_idx, update_layout=True)
+            self.input = HSplit(
+                [ONE_ROW, VSplit([ONE_COL, self.input_window]), ONE_ROW]
+            )
+            self.notebook.focus(self.notebook.current_cell_idx, update_layout=True)
 
     def set_as_code(self):
         prev_cell_type = self.json["cell_type"]
@@ -166,9 +169,23 @@ class Cell:
             text = rich_print("\nIn [ ]:", style="green")
             self.input_prefix.content = FormattedTextControl(text=ANSI(text))
             self.set_input_readonly()
-            if prev_cell_type == "markdown":
-                self.input = Frame(self.input_window)
-                self.notebook.focus(self.notebook.current_cell_idx, update_layout=True)
+            self.input = Frame(self.input_window)
+            self.notebook.focus(self.notebook.current_cell_idx, update_layout=True)
+
+    def set_as_raw(self):
+        prev_cell_type = self.json["cell_type"]
+        if prev_cell_type != "raw":
+            self.notebook.dirty = True
+            self.json["cell_type"] = "raw"
+            if "outputs" in self.json:
+                del self.json["outputs"]
+            if "execution_count" in self.json:
+                del self.json["execution_count"]
+            self.input_prefix.content = FormattedTextControl(text="")
+            self.clear_output()
+            self.set_input_readonly()
+            self.input = Frame(self.input_window)
+            self.notebook.focus(self.notebook.current_cell_idx, update_layout=True)
 
     def set_input_readonly(self):
         if self.json["cell_type"] == "markdown":
@@ -178,6 +195,8 @@ class Cell:
         elif self.json["cell_type"] == "code":
             code = Syntax(self.input_buffer.text, self.notebook.language)
             text = rich_print(code)[:-1]  # remove trailing "\n"
+        elif self.json["cell_type"] == "raw":
+            text = self.input_buffer.text or " "
         line_nb = text.count("\n") + 1
         self.input_window.content = FormattedTextControl(text=ANSI(text))
         height_keep = self.input_window.height
@@ -213,7 +232,8 @@ class Cell:
 
     def update_json(self):
         src_list = [line + "\n" for line in self.input_buffer.text.splitlines()]
-        src_list[-1] = src_list[-1][:-1]
+        if src_list:
+            src_list[-1] = src_list[-1][:-1]
         self.json["source"] = src_list
 
     async def run(self):

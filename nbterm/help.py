@@ -26,6 +26,7 @@ md = Markdown(
     "- `ctrl-v`: paste cell above.\n"
     "- `v`: paste cell below.\n"
     "- `o`: set as code cell.\n"
+    "- `r`: set as raw cell.\n"
     "- `m`: set as Markdown cell.\n"
     "- `l`: clear cell outputs.\n"
     "- `ctrl-e`: run cell.\n"
