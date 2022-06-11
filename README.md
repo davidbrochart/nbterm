@@ -55,6 +55,7 @@ In command mode:
 - `ctrl-v`: paste cell above.
 - `v`: paste cell below.
 - `o`: set as code cell.
+- `r`: set as raw cell.
 - `m`: set as Markdown cell.
 - `l`: clear cell outputs.
 - `ctrl-e`: run cell.
