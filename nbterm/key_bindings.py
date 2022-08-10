@@ -67,7 +67,17 @@ class KeyBindings:
             self.quitting = False
             self.go_up()
 
+        @self.key_bindings.add("k", filter=command_mode)
+        def up(event):
+            self.quitting = False
+            self.go_up()
+
         @self.key_bindings.add("down", filter=command_mode)
+        def down(event):
+            self.quitting = False
+            self.go_down()
+
+        @self.key_bindings.add("j", filter=command_mode)
         def down(event):
             self.quitting = False
             self.go_down()
