@@ -63,7 +63,7 @@ class KeyBindings:
             self.exit_cell()
 
         @self.key_bindings.add("up", filter=command_mode)
-        def up(event):
+        def up_arrow(event):
             self.quitting = False
             self.go_up()
 
@@ -73,7 +73,7 @@ class KeyBindings:
             self.go_up()
 
         @self.key_bindings.add("down", filter=command_mode)
-        def down(event):
+        def down_arrow(event):
             self.quitting = False
             self.go_down()
 
