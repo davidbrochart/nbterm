@@ -5,6 +5,8 @@
 
 Lets you view, edit and execute Jupyter Notebooks in the terminal.
 
+**WARNING**: [jpterm](https://github.com/davidbrochart/jpterm) is the successor of nbterm, which is not maintained anymore.
+
 ## Install
 
 Using pip:
